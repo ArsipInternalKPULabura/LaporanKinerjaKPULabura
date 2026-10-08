@@ -8,11 +8,12 @@ const auth = new google.auth.GoogleAuth({
     client_email: process.env.GOOGLE_CLIENT_EMAIL,
     private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   },
-  scopes: ['https://www.googleapis.com/auth/drive'], // HANYA DRIVE (Sheets dihapus)
+  scopes: ['https://www.googleapis.com/auth/drive'], 
 });
 
 const drive = google.drive({ version: 'v3', auth });
-const BASE_FOLDER_ID = '1tAj_xlkQivJm8V--_Y3wzFVP72xm9V2h'; // Folder baru Anda
+// Folder Google Drive untuk menyimpan PDF sudah diatur sesuai permintaan
+const BASE_FOLDER_ID = '1PMha227_Z5yUWW2xnFuOJ_2ktWDIwWvu'; 
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,7 +33,6 @@ export default async function handler(req, res) {
         .select('*').or(`sheet_name.eq.${loginId},username.eq.${loginId}`).eq('password', password).single();
 
       if (!user) {
-        // Otomatis daftar jika belum ada (Sesuai list Kasubbag/Staf Anda)
         const { data: newUser, error: insertErr } = await supabase.from('users').insert([{
           sheet_name: loginId, username: loginId, password: password, role: 'User'
         }]).select().single();
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
       
       const profile = {
         nama: user?.sheet_name || '',
-        nip: user?.atasan_nip || '', // Meminjam kolom sementara jika belum ada NIP khusus
+        nip: user?.atasan_nip || '', 
         jabatan: user?.jabatan || '',
         unitKerja: user?.unit_kerja || '',
         bulanLaporan: user?.bulan_laporan || 'Oktober 2026',
@@ -114,14 +114,10 @@ export default async function handler(req, res) {
       return res.json({ ok: true });
     }
 
-    // Metode Baru: Sinkronisasi Seluruh Baris ke Supabase (Lebih aman & terurut)
     if (action === 'syncRows') {
       const { rows } = payload;
-      
-      // Hapus data lama bulan ini
       await supabase.from('lhk_data').delete().eq('sheet_name', targetSheet);
       
-      // Masukkan data baru yang sudah diurutkan dari Aplikasi
       if (rows && rows.length > 0) {
         const insertData = rows.map((r, i) => ({
           sheet_name: targetSheet,
