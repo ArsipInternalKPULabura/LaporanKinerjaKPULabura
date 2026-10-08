@@ -3,42 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Aplikasi LHK</title>
+  <title>Aplikasi LHK KPU</title>
   <meta name="theme-color" content="#121212">
   <link rel="manifest" href="manifest.json">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
-    :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #3a3a3a; --primary: #3b82f6; --muted: #9e9e9e; --danger: #cf6679; --success: #03dac6; --table-bg: #252525; --warning: #f59e0b; }
+    :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #3a3a3a; --primary: #3b82f6; --danger: #cf6679; --success: #03dac6; --table-bg: #252525; }
     * { box-sizing: border-box; } 
     body { margin: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--text); }
     .wrap { max-width: 1200px; margin: auto; padding: 16px; }
     .top-actions { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 12px; }
     .top-actions button { padding: 6px 12px; font-size: 11px; border-radius: 6px; }
-    .hero { background: linear-gradient(135deg, #1f2937, #111827); border-radius: 20px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,.3); border: 1px solid var(--border); }
+    .hero { background: linear-gradient(135deg, #1f2937, #111827); border-radius: 20px; padding: 22px; border: 1px solid var(--border); }
     h1 { font-size: 24px; margin: 0 0 5px; color: #fff; } 
     .meta { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 18px; }
     .meta .item { background: rgba(255,255,255,.05); padding: 11px; border-radius: 12px; border: 1px solid var(--border); } 
     .meta small { display: block; opacity: .7; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; } 
     .meta b { font-size: 14px; color: #fff; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-top: 16px; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-top: 16px; }
     .toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px;}
-    button { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; font: inherit; transition: opacity .2s, transform .1s; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
-    button:hover { opacity: .85; } button:active { transform: scale(0.97); }
-    .primary { background: var(--primary); color: #fff; } .secondary { background: #333; color: #fff; border: 1px solid #555; } .danger { background: var(--danger); color: #000; } .success { background: var(--success); color: #000; } .warning { background: var(--warning); color: #000; }
-    input, textarea, select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font: inherit; background: #2c2c2c; color: #fff; outline: none; transition: border .2s; }
+    button { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; font: inherit; transition: opacity .2s; }
+    button:hover { opacity: .85; } 
+    .primary { background: var(--primary); color: #fff; } .secondary { background: #333; color: #fff; border: 1px solid #555; } .danger { background: var(--danger); color: #000; } .success { background: var(--success); color: #000; }
+    input, textarea, select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font: inherit; background: #2c2c2c; color: #fff; outline: none; }
     input:focus, textarea:focus, select:focus { border-color: var(--primary); }
     .status { font-size: 13px; color: var(--success); margin-top: 10px; font-weight: bold; }
+    
     .table-container { overflow-x: auto; border-radius: 10px; margin-top: 10px; border: 1px solid #555; background: var(--table-bg); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 850px; } 
     th, td { border: 1px solid #555; padding: 12px 10px; text-align: center; vertical-align: middle; } 
     th { background: #1a1a1a; color: #fff; font-weight: bold; }
+    .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .action-group button { padding: 8px; font-size: 11px; flex: 1; }
     
-    .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .action-group button { padding: 8px; font-size: 11px; flex: 1; min-width: 75px; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; padding: 12px; z-index: 99; backdrop-filter: blur(4px); } .modal.show { display: flex; }
-    .dialog { background: var(--card); width: min(650px, 100%); max-height: 94vh; overflow: auto; border-radius: 18px; padding: 25px; border: 1px solid var(--border); display: flex; flex-direction: column; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .full { grid-column: 1 / -1; } .field label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--muted); }
-    #loginScreen { max-width: 400px; margin: 100px auto; background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--border); } #mainScreen { display: none; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; padding: 12px; z-index: 99; } .modal.show { display: flex; }
+    .dialog { background: var(--card); width: min(650px, 100%); max-height: 94vh; overflow: auto; border-radius: 18px; padding: 25px; border: 1px solid var(--border); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .full { grid-column: 1 / -1; } .field label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #9e9e9e; }
+    #loginScreen { max-width: 400px; margin: 100px auto; background: var(--card); padding: 30px; border-radius: 20px; } #mainScreen { display: none; }
     #pdfFrame { width: 100%; flex: 1; border: none; border-radius: 10px; background: #fff; min-height: 60vh; margin-bottom:15px; }
   </style>
 </head>
@@ -46,7 +47,7 @@
 
 <div id="loginScreen">
   <h2 style="text-align:center;margin-top:0">Login LHK</h2>
-  <div class="field full" style="margin-bottom:15px"><label>Username / Nama</label><input id="lSheet" placeholder="Nama Akun Anda"></div>
+  <div class="field full" style="margin-bottom:15px"><label>Username / Nama</label><input id="lSheet" placeholder="Contoh: Fredy"></div>
   <div class="field full"><label>Password</label><input type="password" id="lPass" placeholder="Masukkan password"></div>
   <button class="primary" style="width:100%;margin-top:20px;padding:12px" onclick="doLogin()">🔒 MASUK</button>
 </div>
@@ -66,9 +67,7 @@
       <button class="secondary" onclick="openSettings()">⚙️ Pengaturan</button>
       <button class="danger" onclick="doLogout()">🚪 Keluar</button>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-      <div><h1 id="pNama">Memuat...</h1><div id="pModeTampilan" style="color:var(--success);font-size:14px;font-weight:bold;">Tampilan Data Sendiri</div></div>
-    </div>
+    <div><h1 id="pNama">Memuat...</h1><div id="pModeTampilan" style="color:var(--success);font-size:14px;font-weight:bold;">Data Sendiri</div></div>
     <div class="meta">
       <div class="item"><small>Jabatan</small><b id="pJabatan">-</b></div>
       <div class="item"><small>Unit Kerja</small><b id="pUnit">-</b></div>
@@ -78,13 +77,8 @@
 
   <section class="card">
     <div class="toolbar">
-      <div>
-        <button class="primary" onclick="generateBulan()">📅 Generate Bulan</button>
-        <button class="secondary" onclick="openAdd()">➕ Baris Baru</button>
-      </div>
-      <div>
-        <button class="success" onclick="previewPdf()">👁️ Preview & Unduh PDF</button>
-      </div>
+      <div><button class="primary" onclick="generateBulan()">📅 Generate Bulan</button> <button class="secondary" onclick="openAdd()">➕ Baris Baru</button></div>
+      <div><button class="success" onclick="previewPdf()">👁️ Preview & Unduh PDF</button></div>
     </div>
     <div class="status" id="statusMsg"></div>
     <div class="table-container">
@@ -95,10 +89,10 @@
             <th width="150">HARI / TANGGAL</th>
             <th width="100">PUKUL</th>
             <th>URAIAN KEGIATAN</th>
-            <th width="90">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
-            <th width="70">LINK BUKTI DUKUNG</th>
-            <th width="90">KETERANGAN</th>
-            <th width="220">AKSI</th>
+            <th width="120">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
+            <th width="80">LINK BUKTI</th>
+            <th width="100">KETERANGAN</th>
+            <th width="200">AKSI</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -111,10 +105,9 @@
   <h2 id="modalTitle">Edit Kegiatan</h2>
   <input type="hidden" id="arrayIndex"> <input type="hidden" id="insertAfter">
   <div class="grid">
-    <div class="field"><label>Nomor</label><input id="nomor" type="number" readonly style="background:#1a1a1a; cursor:not-allowed;" title="Auto Generate"></div>
-    <div class="field" id="tglField"><label>Tanggal (Otomatis)</label>
-      <input type="date" id="tanggalRaw" onchange="formatTanggalIndo()">
-      <input type="hidden" id="tanggalStr">
+    <div class="field"><label>Nomor (Otomatis)</label><input id="nomor" type="number" readonly style="background:#2a2a2a; color:#888;"></div>
+    <div class="field" id="tglField"><label>Hari / Tanggal</label>
+      <input type="date" id="tanggalRaw" onchange="formatTanggalIndo()"><input type="hidden" id="tanggalStr">
     </div>
     <div class="field full" id="waktuContainer"><label>Pukul Kegiatan</label>
       <div style="display:flex; gap:10px; align-items:center;">
@@ -133,10 +126,8 @@
   <h2>Pengaturan Profil LHK</h2>
   <div class="grid">
     <div class="field full"><label>Bulan Laporan</label><select id="sBulan"></select></div>
-    <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>INFO LOGIN (AKUN)</b></label></div>
-    <div class="field"><label>Username (Singkat)</label><input id="sUsername" placeholder="Agar mudah login"></div>
-    <div class="field"><label>Ganti Password Baru</label><input type="text" id="sPassword" placeholder="Biarkan jika tidak diganti"></div>
-    
+    <div class="field"><label>Username (Singkat)</label><input id="sUsername"></div>
+    <div class="field"><label>Ganti Password</label><input type="text" id="sPassword" placeholder="Abaikan jika tidak diganti"></div>
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>DATA PEGAWAI</b></label></div>
     <div class="field"><label>Nama Lengkap</label><input id="sNama"></div><div class="field"><label>NIP Pegawai</label><input id="sNip"></div>
     <div class="field"><label>Jabatan</label><input id="sJabatan"></div>
@@ -149,9 +140,8 @@
         <option value="Subbagian Hukum dan SDM KPU Kab. Labuhanbatu Utara">Subbagian Hukum dan SDM KPU Kab. Labuhanbatu Utara</option>
       </select>
     </div>
-
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px">
-      <label style="color:#fff"><b>INFO ATASAN (Pilih untuk otomatis)</b></label>
+      <label style="color:#fff"><b>INFO ATASAN</b></label>
       <select id="sPilihAtasan" onchange="pilihAtasan()">
         <option value="">-- Pilih Atasan --</option>
         <option value="keuangan">Kasubbag Keuangan, Umum, dan Logistik</option>
@@ -161,11 +151,10 @@
         <option value="sekretaris">Sekretaris</option>
       </select>
     </div>
-    <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle"></div><div class="field"><label>Nama Atasan</label><input id="sAtasanName"></div><div class="field"><label>NIP Atasan</label><input id="sAtasanNip"></div>
-    
-    <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>TANDA TANGAN (Sistem Otomatis Ukuran)</b></label></div>
-    <div class="field"><label style="color:var(--primary)">Pilih TTD Atasan (Kiri)</label><input type="file" id="sTtdAtasanFile" accept="image/png, image/jpeg" style="padding:8px"></div>
-    <div class="field"><label style="color:var(--success)">Pilih TTD Anda (Kanan)</label><input type="file" id="sTtdFile" accept="image/png, image/jpeg" style="padding:8px"></div>
+    <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle"></div>
+    <div class="field"><label>Nama Atasan</label><input id="sAtasanName"></div><div class="field"><label>NIP Atasan</label><input id="sAtasanNip"></div>
+    <div class="field"><label style="color:var(--primary)">TTD Atasan (Kiri)</label><input type="file" id="sTtdAtasanFile" accept="image/png, image/jpeg" style="padding:8px"></div>
+    <div class="field"><label style="color:var(--success)">TTD Anda (Kanan)</label><input type="file" id="sTtdFile" accept="image/png, image/jpeg" style="padding:8px"></div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalSettings')">Batal</button><button class="primary" onclick="saveSettings()">💾 SIMPAN PENGATURAN</button></div>
 </div></div>
@@ -173,8 +162,7 @@
 <div class="modal" id="modalPdf">
   <div class="dialog" style="width: 95%; height: 95vh; max-width: 1000px; display:flex; flex-direction:column;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h2 style="margin:0">Preview LHK</h2>
-      <button class="danger" onclick="closeModal('modalPdf')">✖ Tutup</button>
+      <h2 style="margin:0">Preview LHK</h2><button class="danger" onclick="closeModal('modalPdf')">✖ Tutup</button>
     </div>
     <iframe id="pdfFrame"></iframe>
     <div style="display:flex; gap:10px; margin-top:10px;">
@@ -189,10 +177,10 @@ let cred={loginId:'', password:'', sheetName:''}, profile={}, rows=[], ttdB64=nu
 let base64PdfUtama = null, targetSheetView = null; 
 
 const DATA_ATASAN = {
-  'keuangan': { title: 'Kasubbag Keuangan, Umum, dan Logistik', name: 'Muhammad Ridwan', nip: '196905211994111001' },
-  'teknis': { title: 'Kasubbag Teknis dan Parmas', name: 'Chairi Asman', nip: '198309162009021007' },
-  'rendatin': { title: 'Kasubbag Rendatin', name: 'Fachrur Razi Juned', nip: '198206072009021006' },
-  'hukum': { title: 'Kasubbag Hukum dan SDM', name: 'Muhammad Rajali Siregar', nip: '198703072020121003' },
+  'keuangan': { title: 'Kasubbag Keuangan, Umum, dan Logistik', name: 'Muhammad Ridwan, S.Pd', nip: '196905211994111001' },
+  'teknis': { title: 'Kasubbag Teknis dan Parmas', name: 'Chairi Asman, SE, M.Si', nip: '198309162009021007' },
+  'rendatin': { title: 'Kasubbag Rendatin', name: 'Fachrur Razi Juned, S.T., M.IP', nip: '198206072009021006' },
+  'hukum': { title: 'Kasubbag Hukum dan SDM', name: 'Muhammad Rajali Siregar, SH', nip: '198703072020121003' },
   'sekretaris': { title: 'Sekretaris', name: 'Muhammad Azmir Daulay', nip: '198003152009121003' }
 };
 
@@ -234,11 +222,10 @@ function loadData() {
     document.getElementById('pUnit').textContent = profile.unitKerja || '-';
     document.getElementById('pBulan').textContent = profile.bulanLaporan || '-';
     
-    if(!targetSheetView) {
-      cekAdminBawahan(); document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri";
-    } else { document.getElementById('pModeTampilan').textContent = `Melihat LHK: ${profile.username}`; }
+    if(!targetSheetView) { cekAdminBawahan(); document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri"; } 
+    else { document.getElementById('pModeTampilan').textContent = `Melihat LHK: ${profile.username}`; }
     
-    renderRows(); setMsg("Data termuat.");
+    renderRowsUI(); setMsg("Data termuat.");
   }).catch(e => setMsg("Error: "+e, "red"));
 }
 
@@ -257,8 +244,7 @@ function cekAdminBawahan() {
 function lihatLhkBawahan() { const sel = document.getElementById('bawahanSelect').value; if (!sel) return alert("Pilih bawahan!"); targetSheetView = sel; loadData(); }
 function kembaliKeLhkSendiri() { targetSheetView = null; loadData(); }
 
-// MERGE ROWSPAN UI HTML & SEMUA RATA TENGAH
-function renderRows() {
+function renderRowsUI() {
   const tb = document.getElementById('tbody');
   if(!rows.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px">Belum ada kegiatan.</td></tr>'; return; }
   
@@ -270,29 +256,28 @@ function renderRows() {
     if (!isLanjutan) {
       let rowspan = 1;
       for (let j = i + 1; j < rows.length; j++) {
-        if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
-        else break;
+        if (!rows[j].nomor && !rows[j].tanggal) rowspan++; else break;
       }
       html += `<tr>
-        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e; border: 1px solid #555;">${r.nomor}</td>
-        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e; font-weight:bold; border: 1px solid #555;">${r.tanggal}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.pukul}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.uraian.replace(/\n/g,'<br>')}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.jumlah||''}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.keterangan||''}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">
+        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e;">${r.nomor}</td>
+        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e; font-weight:bold;">${r.tanggal}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.pukul}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.uraian.replace(/\n/g,'<br>')}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.jumlah||''}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka Bukti</a>':''}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.keterangan||''}</td>
+        <td style="text-align:center; vertical-align:middle;">
           <div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div>
         </td>
       </tr>`;
     } else {
       html += `<tr>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.pukul}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.uraian.replace(/\n/g,'<br>')}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.jumlah||''}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.keterangan||''}</td>
-        <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">
+        <td style="text-align:center; vertical-align:middle;">${r.pukul}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.uraian.replace(/\n/g,'<br>')}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.jumlah||''}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka Bukti</a>':''}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.keterangan||''}</td>
+        <td style="text-align:center; vertical-align:middle;">
           <div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div>
         </td>
       </tr>`;
@@ -308,18 +293,8 @@ function formatTanggalIndo() {
 }
 
 function openSettings() {
-  document.getElementById('sUsername').value = profile.username || '';
-  document.getElementById('sBulan').value = profile.bulanLaporan || 'Oktober 2026';
-  document.getElementById('sNama').value = profile.nama || ''; 
-  document.getElementById('sNip').value = profile.nip || ''; 
-  document.getElementById('sJabatan').value = profile.jabatan || ''; 
-  document.getElementById('sUnit').value = profile.unitKerja || ''; 
-  document.getElementById('sAtasanTitle').value = profile.atasanTitle || ''; 
-  document.getElementById('sAtasanName').value = profile.atasanName || ''; 
-  document.getElementById('sAtasanNip').value = profile.atasanNip || ''; 
-  ttdB64 = profile.ttdBase64 || null;
-  ttdAtasanB64 = profile.ttdAtasanBase64 || null;
-  document.getElementById('modalSettings').classList.add('show');
+  document.getElementById('sUsername').value = profile.username || ''; document.getElementById('sBulan').value = profile.bulanLaporan || 'Oktober 2026'; document.getElementById('sNama').value = profile.nama || ''; document.getElementById('sNip').value = profile.nip || ''; document.getElementById('sJabatan').value = profile.jabatan || ''; document.getElementById('sUnit').value = profile.unitKerja || ''; document.getElementById('sAtasanTitle').value = profile.atasanTitle || ''; document.getElementById('sAtasanName').value = profile.atasanName || ''; document.getElementById('sAtasanNip').value = profile.atasanNip || ''; 
+  ttdB64 = profile.ttdBase64 || null; ttdAtasanB64 = profile.ttdAtasanBase64 || null; document.getElementById('modalSettings').classList.add('show');
 }
 
 function pilihAtasan() { const val = document.getElementById('sPilihAtasan').value; if(val && DATA_ATASAN[val]) { document.getElementById('sAtasanTitle').value = DATA_ATASAN[val].title; document.getElementById('sAtasanName').value = DATA_ATASAN[val].name; document.getElementById('sAtasanNip').value = DATA_ATASAN[val].nip; } }
@@ -395,8 +370,7 @@ function saveRow() {
 
 function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
 
-
-// CETAK PDF ABSOLUT PRESISI A4
+// RENDER PDF PRESISI A4
 function previewPdf() { 
   setMsg("Sedang merender PDF...", "var(--warning)"); 
   
@@ -417,7 +391,7 @@ function previewPdf() {
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul}</td>
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian.replace(/\n/g,'<br>')}</td>
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
-        <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">LINK BUKTI</a>':''}</td>
+        <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; max-width:100px;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">LINK BUKTI</a>':''}</td>
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
       </tr>`;
     } else {
@@ -425,7 +399,7 @@ function previewPdf() {
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul}</td>
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian.replace(/\n/g,'<br>')}</td>
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
-        <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">LINK BUKTI</a>':''}</td>
+        <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; max-width:100px;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">LINK BUKTI</a>':''}</td>
         <td style="padding:6px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
       </tr>`;
     }
@@ -439,63 +413,45 @@ function previewPdf() {
   const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
   const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
 
+  // Tanda Tangan Tanpa Border
   const ttdKiri = profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris') ? 
     `Diketahui/Disetujui<br>${profile.atasanTitle}<br><div style="height:75px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdAtasanBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:75px; max-width:150px; opacity:${profile.ttdAtasanBase64?1:0};"></div><b><u>${profile.atasanName}</u></b><br>NIP. ${profile.atasanNip}` : '';
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:75px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:75px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div><b><u>${profile.nama || profile.username}</u></b><br>NIP. ${profile.nip || '-'}`;
 
-  // Mengunci Lebar Dokumen Secara Absolut untuk A4 Fit
+  // Container PDF dipatok absolut di 718px untuk memastikan Fit ke A4 190mm
   const htmlContent = `
-  <div style="width: 800px; padding: 25px; margin: 0 auto; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
+  <div style="width: 718px; max-width: 718px; margin: 0 auto; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
     
-    <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 25px; line-height: 1.5;">
-      REKAP LAPORAN CAPAIAN KINERJA<br>
-      APARATUR SIPIL NEGARA (ASN)<br>
-      KPU PROVINSI SUMATERA UTARA
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;">
+      <table style="border: none; width: 60%; text-align: left; font-size: 11px; font-weight: bold; border-collapse: collapse;">
+        <tr><td style="width: 80px; padding: 2px 0; border: none;">NAMA</td><td style="width: 15px; padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none;">${profile.nama || profile.username || '-'}</td></tr>
+        <tr><td style="padding: 2px 0; border: none;">NIP</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none;">${profile.nip || '-'}</td></tr>
+        <tr><td style="padding: 2px 0; border: none;">JABATAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none;">${profile.jabatan || '-'}</td></tr>
+        <tr><td style="padding: 2px 0; border: none;">UNIT KERJA</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none;">${profile.unitKerja || '-'}</td></tr>
+        <tr><td style="padding: 2px 0; border: none;">BULAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none;">${profile.bulanLaporan || '-'}</td></tr>
+      </table>
+      <div style="width: 40%; text-align: center; font-weight: bold; font-size: 12px; line-height: 1.5;">
+        REKAP LAPORAN CAPAIAN KINERJA<br>
+        APARATUR SIPIL NEGARA (ASN)<br>
+        KPU PROVINSI SUMATERA UTARA
+      </div>
     </div>
 
-    <table style="width: 100%; border: none; font-size: 11px; font-weight: bold; margin-bottom: 10px; border-collapse: collapse;">
-      <tr>
-        <td style="width: 100px; padding: 3px 0; border: none; text-align: left;">NAMA</td>
-        <td style="width: 15px; padding: 3px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 3px 0; border: none; text-align: left;">${profile.nama || profile.username || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 3px 0; border: none; text-align: left;">NIP</td>
-        <td style="padding: 3px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 3px 0; border: none; text-align: left;">${profile.nip || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 3px 0; border: none; text-align: left;">JABATAN</td>
-        <td style="padding: 3px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 3px 0; border: none; text-align: left;">${profile.jabatan || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 3px 0; border: none; text-align: left;">UNIT KERJA</td>
-        <td style="padding: 3px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 3px 0; border: none; text-align: left;">${profile.unitKerja || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 3px 0; border: none; text-align: left;">BULAN</td>
-        <td style="padding: 3px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 3px 0; border: none; text-align: left;">${profile.bulanLaporan || '-'}</td>
-      </tr>
-    </table>
-
-    <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px;">
+    <div style="font-weight: bold; font-size: 10px; margin-bottom: 8px;">
       JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT
     </div>
 
-    <table style="width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; word-wrap: break-word; border: 1px solid black;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; border: 1px solid black;">
       <thead>
         <tr>
-          <th style="width: 5%; padding: 8px 4px; text-align: center; vertical-align: middle; border:1px solid black;">NO</th>
-          <th style="width: 15%; padding: 8px 4px; text-align: center; vertical-align: middle; border:1px solid black;">HARI/TANGGAL</th>
-          <th style="width: 12%; padding: 8px 4px; text-align: center; vertical-align: middle; border:1px solid black;">PUKUL</th>
-          <th style="width: 28%; padding: 8px 4px; text-align: center; vertical-align: middle; border:1px solid black;">URAIAN KEGIATAN</th>
-          <th style="width: 13%; padding: 8px 4px; text-align: center; vertical-align: middle; border:1px solid black;">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
-          <th style="width: 14%; padding: 8px 4px; text-align: center; vertical-align: middle; border:1px solid black;">LINK BUKTI DUKUNG</th>
-          <th style="width: 13%; padding: 8px 4px; text-align: center; vertical-align: middle; border:1px solid black;">KETERANGAN</th>
+          <th style="width: 4%; padding: 6px; text-align: center; vertical-align: middle; border:1px solid black;">NO</th>
+          <th style="width: 16%; padding: 6px; text-align: center; vertical-align: middle; border:1px solid black;">HARI/TANGGAL</th>
+          <th style="width: 12%; padding: 6px; text-align: center; vertical-align: middle; border:1px solid black;">PUKUL</th>
+          <th style="width: 32%; padding: 6px; text-align: center; vertical-align: middle; border:1px solid black;">URAIAN KEGIATAN</th>
+          <th style="width: 12%; padding: 6px; text-align: center; vertical-align: middle; border:1px solid black;">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
+          <th style="width: 13%; padding: 6px; text-align: center; vertical-align: middle; border:1px solid black;">LINK BUKTI DUKUNG</th>
+          <th style="width: 11%; padding: 6px; text-align: center; vertical-align: middle; border:1px solid black;">KETERANGAN</th>
         </tr>
       </thead>
       <tbody>
@@ -515,10 +471,10 @@ function previewPdf() {
   const wrapper = document.createElement('div'); wrapper.innerHTML = htmlContent;
 
   const opt = {
-    margin:       [10, 5, 10, 5], 
+    margin:       10, 
     filename:     'LHK.pdf',
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, windowWidth: 830 },
+    image:        { type: 'jpeg', quality: 1 },
+    html2canvas:  { scale: 2, useCORS: true, windowWidth: 738 },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
