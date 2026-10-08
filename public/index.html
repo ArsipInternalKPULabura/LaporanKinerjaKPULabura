@@ -34,7 +34,6 @@
     th, td { border: 1px solid #555; padding: 12px 10px; text-align: center; vertical-align: middle; } 
     th { background: #1a1a1a; color: #fff; font-weight: bold; } td:nth-child(4) { text-align: left; line-height: 1.5; }
     
-    .lanjut-row td.merged { border-top: none; color: transparent; user-select: none; }
     .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .action-group button { padding: 8px; font-size: 11px; flex: 1; min-width: 75px; }
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; padding: 12px; z-index: 99; backdrop-filter: blur(4px); } .modal.show { display: flex; }
     .dialog { background: var(--card); width: min(650px, 100%); max-height: 94vh; overflow: auto; border-radius: 18px; padding: 25px; border: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -47,8 +46,8 @@
 
 <div id="loginScreen">
   <h2 style="text-align:center;margin-top:0">Login LHK</h2>
-  <div class="field full" style="margin-bottom:15px"><label>Username / Nama</label><input id="lSheet" placeholder="Contoh: John Doe"></div>
-  <div class="field full"><label>Password</label><input type="password" id="lPass" placeholder="Password Anda"></div>
+  <div class="field full" style="margin-bottom:15px"><label>Username / Nama</label><input id="lSheet" placeholder="Nama Akun Anda"></div>
+  <div class="field full"><label>Password</label><input type="password" id="lPass" placeholder="Masukkan password"></div>
   <button class="primary" style="width:100%;margin-top:20px;padding:12px" onclick="doLogin()">🔒 MASUK</button>
 </div>
 
@@ -101,7 +100,7 @@
   <h2 id="modalTitle">Edit Kegiatan</h2>
   <input type="hidden" id="arrayIndex"> <input type="hidden" id="insertAfter">
   <div class="grid">
-    <div class="field"><label>Nomor</label><input id="nomor" type="number"></div>
+    <div class="field"><label>Nomor</label><input id="nomor" type="number" readonly style="background:#1a1a1a; cursor:not-allowed;"></div>
     <div class="field" id="tglField"><label>Tanggal (Otomatis)</label>
       <input type="date" id="tanggalRaw" onchange="formatTanggalIndo()">
       <input type="hidden" id="tanggalStr">
@@ -113,6 +112,7 @@
     </div>
     <div class="field"><label>Jumlah Bukti</label><input id="jumlah" placeholder="1 Kegiatan"></div>
     <div class="field"><label>Link Bukti (Opsional)</label><input id="link"></div>
+    <div class="field full"><label>Keterangan (Opsional)</label><input id="keterangan" placeholder="-"></div>
     <div class="field full"><label>Uraian Kegiatan</label><textarea id="uraian" rows="5"></textarea></div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalForm')">Batal</button><button class="primary" onclick="saveRow()">💾 SIMPAN</button></div>
@@ -152,7 +152,7 @@
     </div>
     <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle"></div><div class="field"><label>Nama Atasan</label><input id="sAtasanName"></div><div class="field"><label>NIP Atasan</label><input id="sAtasanNip"></div>
     
-    <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>TANDA TANGAN (Opsional)</b></label></div>
+    <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>TANDA TANGAN (Sistem Otomatis Ukuran)</b></label></div>
     <div class="field"><label style="color:var(--primary)">Pilih TTD Atasan (Kiri)</label><input type="file" id="sTtdAtasanFile" accept="image/png, image/jpeg" style="padding:8px"></div>
     <div class="field"><label style="color:var(--success)">Pilih TTD Anda (Kanan)</label><input type="file" id="sTtdFile" accept="image/png, image/jpeg" style="padding:8px"></div>
   </div>
@@ -168,7 +168,7 @@
     <iframe id="pdfFrame"></iframe>
     <div style="display:flex; gap:10px; margin-top:10px;">
       <button class="secondary" style="flex:1; padding:14px;" onclick="eksekusiUnduhPdf()">⬇️ UNDUH LOKAL</button>
-      <button class="primary" style="flex:1; padding:14px;" onclick="eksekusiSimpanKeDrive()">☁️ SIMPAN KE DRIVE (BULANAN)</button>
+      <button class="primary" style="flex:1; padding:14px;" onclick="eksekusiSimpanKeDrive()">☁️ SIMPAN KE DRIVE</button>
     </div>
   </div>
 </div>
@@ -246,24 +246,44 @@ function cekAdminBawahan() {
 function lihatLhkBawahan() { const sel = document.getElementById('bawahanSelect').value; if (!sel) return alert("Pilih bawahan!"); targetSheetView = sel; loadData(); }
 function kembaliKeLhkSendiri() { targetSheetView = null; loadData(); }
 
+// MERGE ROWSPAN SECARA OTOMATIS DI HTML UI
 function renderRows() {
   const tb = document.getElementById('tbody');
   if(!rows.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px">Belum ada kegiatan.</td></tr>'; return; }
   
-  tb.innerHTML = rows.map((r, i) => {
-    const isLanjutan = !r.nomor && !r.tanggal;
-    const cl = isLanjutan ? 'class="lanjut-row"' : '';
-    const merged = isLanjutan ? 'class="merged"' : '';
-    return `<tr ${cl}>
-      <td ${merged}>${isLanjutan ? '||' : (r.nomor||'')}</td>
-      <td ${merged} style="font-weight:bold">${isLanjutan ? '' : (r.tanggal||'')}</td>
-      <td ${merged}>${isLanjutan ? '' : (r.pukul||'')}</td>
-      <td>${r.uraian.replace(/\n/g,'<br>')}</td>
-      <td>${r.jumlah||''}</td>
-      <td>${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
-      <td><div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div></td>
-    </tr>`;
-  }).join('');
+  let html = '';
+  for (let i = 0; i < rows.length; i++) {
+    let r = rows[i];
+    if (r.nomor) {
+      let rowspan = 1;
+      for (let j = i + 1; j < rows.length; j++) {
+        if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
+        else break;
+      }
+      html += `<tr>
+        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e;">${r.nomor}</td>
+        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e; font-weight:bold;">${r.tanggal}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.pukul}</td>
+        <td style="text-align:left; vertical-align:middle;">${r.uraian.replace(/\n/g,'<br>')}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.jumlah||''}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
+        <td style="text-align:center; vertical-align:middle;">
+          <div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div>
+        </td>
+      </tr>`;
+    } else {
+      html += `<tr>
+        <td style="text-align:center; vertical-align:middle;">${r.pukul}</td>
+        <td style="text-align:left; vertical-align:middle;">${r.uraian.replace(/\n/g,'<br>')}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.jumlah||''}</td>
+        <td style="text-align:center; vertical-align:middle;">${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
+        <td style="text-align:center; vertical-align:middle;">
+          <div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div>
+        </td>
+      </tr>`;
+    }
+  }
+  tb.innerHTML = html;
 }
 
 function formatTanggalIndo() {
@@ -322,7 +342,7 @@ function openAdd() {
   let maxNum = 0; rows.forEach(r => { if(r.nomor && !isNaN(r.nomor)) maxNum = Math.max(maxNum, Number(r.nomor)); });
   document.getElementById('nomor').value = maxNum + 1; 
   document.getElementById('tanggalRaw').readOnly = false; document.getElementById('tanggalRaw').value = '';
-  document.getElementById('tanggalStr').value=''; document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; 
+  document.getElementById('tanggalStr').value=''; document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('keterangan').value=''; 
   document.getElementById('waktuContainer').style.display = 'flex'; document.getElementById('modalForm').classList.add('show'); 
 }
 
@@ -337,14 +357,15 @@ function openEdit(index) {
      if(splitJam[0]) document.getElementById('pukulAwal').value = splitJam[0].trim();
      if(splitJam[1]) document.getElementById('pukulAkhir').value = splitJam[1].trim();
   }
-  document.getElementById('uraian').value = r.uraian; document.getElementById('jumlah').value = r.jumlah; document.getElementById('link').value = r.link; document.getElementById('modalForm').classList.add('show'); 
+  document.getElementById('uraian').value = r.uraian; document.getElementById('jumlah').value = r.jumlah; document.getElementById('link').value = r.link; document.getElementById('keterangan').value = r.keterangan || '';
+  document.getElementById('modalForm').classList.add('show'); 
 }
 
 function addLanjutan(index) {
   document.getElementById('modalTitle').textContent = 'Tambah Lanjutan'; document.getElementById('arrayIndex').value = ''; document.getElementById('insertAfter').value = index; 
   document.getElementById('nomor').value=''; document.getElementById('tanggalStr').value=''; 
   document.getElementById('tanggalRaw').style.display = 'none'; document.getElementById('waktuContainer').style.display = 'none'; 
-  document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('jumlah').value=''; document.getElementById('link').value=''; 
+  document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('jumlah').value=''; document.getElementById('link').value=''; document.getElementById('keterangan').value=''; 
   document.getElementById('modalForm').classList.add('show'); 
 }
 
@@ -352,55 +373,124 @@ function saveRow() {
   closeModal('modalForm'); setMsg("Menyimpan baris...", "white"); 
   const index = document.getElementById('arrayIndex').value; const insertAfterVal = document.getElementById('insertAfter').value; 
   let jamGabungan = ''; if(document.getElementById('pukulAwal').value && document.getElementById('pukulAkhir').value) jamGabungan = `${document.getElementById('pukulAwal').value}-${document.getElementById('pukulAkhir').value} WIB`;
-  const newData = { nomor: document.getElementById('nomor').value, tanggal: document.getElementById('tanggalStr').value, pukul: jamGabungan, uraian: document.getElementById('uraian').value, jumlah: document.getElementById('jumlah').value, link: document.getElementById('link').value };
+  const newData = { nomor: document.getElementById('nomor').value, tanggal: document.getElementById('tanggalStr').value, pukul: jamGabungan, uraian: document.getElementById('uraian').value, jumlah: document.getElementById('jumlah').value, link: document.getElementById('link').value, keterangan: document.getElementById('keterangan').value };
   if(index !== '') { rows[index] = newData; } else if(insertAfterVal !== '') { rows.splice(Number(insertAfterVal) + 1, 0, newData); } else { rows.push(newData); }
   callApi('syncRows', { rows }).then(loadData);
 }
 
 function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
 
+// MESIN CETAK PDF TERKALIBRASI PRESISI A4
 function previewPdf() { 
   setMsg("Sedang merender PDF...", "var(--warning)"); 
+  
   let rowsHtml = '';
-  rows.forEach((r) => {
-    const isLanjutan = !r.nomor && !r.tanggal;
-    if (isLanjutan) {
-       rowsHtml += `<tr><td style="border-top:none;border-bottom:none"></td><td style="border-top:none;border-bottom:none"></td><td style="border-top:none;border-bottom:none"></td><td style="text-align:left; padding:8px;">${r.uraian.replace(/\n/g,'<br>')}</td><td style="padding:8px;">${r.jumlah||''}</td><td style="padding:8px;">${r.link||''}</td></tr>`;
+  for (let i = 0; i < rows.length; i++) {
+    let r = rows[i];
+    if (r.nomor) {
+      let rowspan = 1;
+      for (let j = i + 1; j < rows.length; j++) {
+        if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
+        else break;
+      }
+      rowsHtml += `<tr>
+        <td rowspan="${rowspan}" style="padding:5px; text-align:center; vertical-align:middle;">${r.nomor}</td>
+        <td rowspan="${rowspan}" style="padding:5px; text-align:center; vertical-align:middle;">${r.tanggal}</td>
+        <td style="padding:5px; text-align:center; vertical-align:middle;">${r.pukul}</td>
+        <td style="padding:5px; text-align:left; vertical-align:middle;">${r.uraian.replace(/\n/g,'<br>')}</td>
+        <td style="padding:5px; text-align:center; vertical-align:middle;">${r.jumlah||''}</td>
+        <td style="padding:5px; text-align:center; vertical-align:middle; word-break:break-all;"><a href="${r.link||'#'}" style="color:blue; text-decoration:none;">${r.link||''}</a></td>
+        <td style="padding:5px; text-align:center; vertical-align:middle;">${r.keterangan||''}</td>
+      </tr>`;
     } else {
-       rowsHtml += `<tr><td style="padding:8px;">${r.nomor||''}</td><td style="padding:8px;">${r.tanggal||''}</td><td style="padding:8px;">${r.pukul||''}</td><td style="text-align:left; padding:8px;">${r.uraian.replace(/\n/g,'<br>')}</td><td style="padding:8px;">${r.jumlah||''}</td><td style="padding:8px;">${r.link||''}</td></tr>`;
+      rowsHtml += `<tr>
+        <td style="padding:5px; text-align:center; vertical-align:middle;">${r.pukul}</td>
+        <td style="padding:5px; text-align:left; vertical-align:middle;">${r.uraian.replace(/\n/g,'<br>')}</td>
+        <td style="padding:5px; text-align:center; vertical-align:middle;">${r.jumlah||''}</td>
+        <td style="padding:5px; text-align:center; vertical-align:middle; word-break:break-all;"><a href="${r.link||'#'}" style="color:blue; text-decoration:none;">${r.link||''}</a></td>
+        <td style="padding:5px; text-align:center; vertical-align:middle;">${r.keterangan||''}</td>
+      </tr>`;
     }
-  });
+  }
 
-  const ttdKiri = profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris') ? `Diketahui/Disetujui<br>${profile.atasanTitle}<br><img src="${profile.ttdAtasanBase64 || ''}" style="height:70px; opacity:${profile.ttdAtasanBase64?1:0}; display:block; margin:auto;"><br><b><u>${profile.atasanName}</u></b><br>NIP. ${profile.atasanNip}` : '';
-  const ttdKanan = `Aek Kanopan, ${profile.bulanLaporan}<br>${profile.jabatan}<br><img src="${profile.ttdBase64 || ''}" style="height:70px; opacity:${profile.ttdBase64?1:0}; display:block; margin:auto;"><br><b><u>${profile.nama || profile.username}</u></b><br>NIP. ${profile.nip || '-'}`;
+  const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  let blnStr = profile.bulanLaporan || 'Oktober 2026';
+  let mIdx = 9; let yyyy = 2026;
+  for(let i=0; i<months.length; i++) { if(blnStr.toLowerCase().includes(months[i].toLowerCase())) { mIdx = i; break; } }
+  const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]);
+  const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
+  const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
 
-  const html = `<div style="padding: 30px; font-family: 'Times New Roman', Times, serif; color: black; background: white; width: 800px; box-sizing: border-box;">
-    <h3 style="text-align: center; margin-bottom: 20px; font-size: 16px;">REKAPITULASI CAPAIAN KINERJA HARIAN (LHK)</h3>
-    <table style="width: 100%; margin-bottom: 20px; font-size: 14px; border:none; text-align:left;">
-      <tr><td width="150" style="padding:3px; border:none;">NAMA PEGAWAI</td><td width="10" style="padding:3px; border:none;">:</td><td style="padding:3px; border:none;">${profile.nama || profile.username || '-'}</td></tr>
-      <tr><td style="padding:3px; border:none;">NIP</td><td style="padding:3px; border:none;">:</td><td style="padding:3px; border:none;">${profile.nip || '-'}</td></tr>
-      <tr><td style="padding:3px; border:none;">JABATAN</td><td style="padding:3px; border:none;">:</td><td style="padding:3px; border:none;">${profile.jabatan || '-'}</td></tr>
-      <tr><td style="padding:3px; border:none;">UNIT KERJA</td><td style="padding:3px; border:none;">:</td><td style="padding:3px; border:none;">${profile.unitKerja || '-'}</td></tr>
-      <tr><td style="padding:3px; border:none;">BULAN LAPORAN</td><td style="padding:3px; border:none;">:</td><td style="padding:3px; border:none;">${profile.bulanLaporan || '-'}</td></tr>
-    </table>
-    <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 30px;" border="1">
-      <thead>
-        <tr><th width="30" style="padding:8px; text-align:center;">NO</th><th width="120" style="padding:8px; text-align:center;">HARI / TANGGAL</th><th width="90" style="padding:8px; text-align:center;">PUKUL</th><th style="padding:8px; text-align:center;">URAIAN KEGIATAN</th><th width="70" style="padding:8px; text-align:center;">JUMLAH</th><th width="60" style="padding:8px; text-align:center;">LINK</th></tr>
-      </thead>
-      <tbody style="text-align:center;">${rowsHtml}</tbody>
-    </table>
-    <table style="width: 100%; text-align: center; font-size: 14px; border: none;">
+  const ttdKiri = profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris') ? 
+    `Diketahui/Disetujui<br>${profile.atasanTitle}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdAtasanBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdAtasanBase64?1:0};"></div><b><u>${profile.atasanName}</u></b><br>NIP. ${profile.atasanNip}` : '';
+    
+  const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div><b><u>${profile.nama || profile.username}</u></b><br>NIP. ${profile.nip || '-'}`;
+
+  const htmlContent = `
+  <div style="width: 190mm; padding: 0; margin: 0; font-family: Arial, sans-serif; color: black; background: white; font-size: 11px; box-sizing: border-box;">
+    <table style="width: 100%; border: none; font-size: 11px; font-weight: bold; margin-bottom: 10px;">
       <tr>
-        <td width="50%" style="border:none; vertical-align:bottom;">${ttdKiri}</td>
-        <td width="50%" style="border:none; vertical-align:bottom;">${ttdKanan}</td>
+        <td style="width: 60%; vertical-align: top;">
+          <table style="border: none; width: 100%; text-align: left;">
+            <tr><td style="width: 80px; padding:2px 0;">NAMA</td><td style="width: 10px; padding:2px 0;">:</td><td style="padding:2px 0;">${profile.nama || profile.username || '-'}</td></tr>
+            <tr><td style="padding:2px 0;">NIP</td><td style="padding:2px 0;">:</td><td style="padding:2px 0;">${profile.nip || '-'}</td></tr>
+            <tr><td style="padding:2px 0;">JABATAN</td><td style="padding:2px 0;">:</td><td style="padding:2px 0;">${profile.jabatan || '-'}</td></tr>
+            <tr><td style="padding:2px 0;">UNIT KERJA</td><td style="padding:2px 0;">:</td><td style="padding:2px 0;">${profile.unitKerja || '-'}</td></tr>
+            <tr><td style="padding:2px 0;">BULAN</td><td style="padding:2px 0;">:</td><td style="padding:2px 0;">${profile.bulanLaporan || '-'}</td></tr>
+          </table>
+        </td>
+        <td style="width: 40%; vertical-align: top; text-align: center;">
+          REKAP LAPORAN CAPAIAN KINERJA<br>
+          APARATUR SIPIL NEGARA (ASN)<br>
+          KPU PROVINSI SUMATERA UTARA
+        </td>
       </tr>
     </table>
-  </div>`;
+    
+    <div style="text-align: center; font-weight: bold; font-size: 10px; margin-bottom: 5px;">JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT</div>
+    
+    <table border="1" style="width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; border-color: black;">
+      <thead>
+        <tr>
+          <th style="width: 5%; padding: 5px;">NO</th>
+          <th style="width: 14%; padding: 5px;">HARI/TANGGAL</th>
+          <th style="width: 13%; padding: 5px;">PUKUL</th>
+          <th style="width: 30%; padding: 5px;">URAIAN KEGIATAN</th>
+          <th style="width: 10%; padding: 5px;">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
+          <th style="width: 18%; padding: 5px;">LINK BUKTI DUKUNG</th>
+          <th style="width: 10%; padding: 5px;">KETERANGAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
 
-  const wrapper = document.createElement('div'); wrapper.innerHTML = html;
-  html2pdf().set({ margin: [15, 10, 15, 10], filename: 'LHK.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(wrapper).outputPdf('datauristring').then(base64 => {
-    base64PdfUtama = base64; document.getElementById('pdfFrame').src = base64PdfUtama; document.getElementById('modalPdf').classList.add('show'); setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
-  }).catch(e => setMsg("Error PDF: "+e, "red"));
+    <table style="width: 100%; margin-top: 20px; font-size: 11px; border: none; page-break-inside: avoid;">
+      <tr>
+        <td style="width: 50%; text-align: center; vertical-align: bottom;">${ttdKiri}</td>
+        <td style="width: 50%; text-align: center; vertical-align: bottom;">${ttdKanan}</td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const wrapper = document.createElement('div'); wrapper.innerHTML = htmlContent;
+
+  const opt = {
+    margin:       10,
+    filename:     'LHK.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(wrapper).outputPdf('datauristring').then(function(pdfBase64) {
+      base64PdfUtama = pdfBase64;
+      document.getElementById('pdfFrame').src = base64PdfUtama;
+      document.getElementById('modalPdf').classList.add('show');
+      setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
+  }).catch(e => { setMsg("Error merender PDF: " + e, "red"); });
 }
 
 function eksekusiUnduhPdf() {
