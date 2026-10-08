@@ -54,15 +54,15 @@ export default async function handler(req, res) {
         for (let u of allUsers) {
           if (u.sheet_name === aktorLogin) continue;
           let uJabatan = (u.jabatan || '').toLowerCase();
+          
           if (myRole === 'Super Admin') {
             bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
           } else if (myRole === 'Admin') {
             if (myJabatan.includes('sekretaris') && uJabatan.includes('kasubbag')) {
               bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
             } else if (myJabatan.includes('kasubbag')) {
-              let isSugiono = u.username.toLowerCase().includes('sugiono');
-              let isHukumOrKeuangan = myUnit.toLowerCase().includes('hukum dan sdm') || myUnit.toLowerCase().includes('keuangan umum');
-              if (u.unit_kerja === myUnit || (isHukumOrKeuangan && isSugiono)) {
+              // Kasubbag HANYA melihat user yang mengisi Unit Kerja yang SAMA PERSIS
+              if (u.unit_kerja === myUnit) {
                 bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
               }
             }
