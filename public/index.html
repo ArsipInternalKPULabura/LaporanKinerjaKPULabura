@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Aplikasi LHK</title>
+  <meta name="theme-color" content="#121212">
+  
+  <!-- ENGINE PENCETAK PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #3a3a3a; --primary: #3b82f6; --muted: #9e9e9e; --danger: #cf6679; --success: #03dac6; --table-bg: #252525; --warning: #f59e0b; }
+    * { box-sizing: border-box; } 
+    body { margin: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--text); }
+    .wrap { max-width: 1200px; margin: auto; padding: 16px; }
+    .top-actions { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 12px; }
+    .top-actions button { padding: 6px 12px; font-size: 11px; border-radius: 6px; }
+    .hero { background: linear-gradient(135deg, #1f2937, #111827); border-radius: 20px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,.3); border: 1px solid var(--border); }
+    h1 { font-size: 24px; margin: 0 0 5px; color: #fff; } 
+    .meta { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 18px; }
+    .meta .item { background: rgba(255,255,255,.05); padding: 11px; border-radius: 12px; border: 1px solid var(--border); } 
+    .meta small { display: block; opacity: .7; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; } 
+    .meta b { font-size: 14px; color: #fff; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-top: 16px; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+    .toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px;}
+    button { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; font: inherit; transition: opacity .2s, transform .1s; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+    button:hover { opacity: .85; } button:active { transform: scale(0.97); }
+    .primary { background: var(--primary); color: #fff; } .secondary { background: #333; color: #fff; border: 1px solid #555; } .danger { background: var(--danger); color: #000; } .success { background: var(--success); color: #000; } .warning { background: var(--warning); color: #000; }
+    input, textarea, select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font: inherit; background: #2c2c2c; color: #fff; outline: none; transition: border .2s; }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+    .status { font-size: 13px; color: var(--success); margin-top: 10px; font-weight: bold; }
+    .table-container { overflow-x: auto; border-radius: 10px; margin-top: 10px; border: 1px solid #555; background: var(--table-bg); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 850px; } 
+    th, td { border: 1px solid #555; padding: 12px 10px; text-align: center; vertical-align: middle; } 
+    th { background: #1a1a1a; color: #fff; font-weight: bold; } td:nth-child(4) { text-align: left; line-height: 1.5; }
+    
+    /* STYLE UNTUK MERGE LANJUTAN */
+    .lanjut-row td.merged { border-top: none; color: transparent; user-select: none; }
+    
+    .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .action-group button { padding: 8px; font-size: 11px; flex: 1; min-width: 75px; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; padding: 12px; z-index: 99; backdrop-filter: blur(4px); } .modal.show { display: flex; }
+    .dialog { background: var(--card); width: min(650px, 100%); max-height: 94vh; overflow: auto; border-radius: 18px; padding: 25px; border: 1px solid var(--border); display: flex; flex-direction: column; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .full { grid-column: 1 / -1; } .field label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--muted); }
+    #loginScreen { max-width: 400px; margin: 100px auto; background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--border); } #mainScreen { display: none; }
+    #pdfFrame { width: 100%; flex: 1; border: none; border-radius: 10px; background: #fff; min-height: 60vh; margin-bottom:15px; }
+    
+    /* WADAH RENDER PDF (Hanya diakses sistem untuk cetak) */
+    #printWadah { position: absolute; top: -9999px; left: -9999px; background: white; color: black; font-family: 'Times New Roman', Times, serif; width: 800px; padding: 30px; }
+    #printWadah h3 { text-align: center; font-size: 16px; margin: 0 0 20px 0; }
+    .kop-tabel { width: 100%; font-size: 14px; margin-bottom: 20px; }
+    .kop-tabel td { border: none; text-align: left; padding: 3px; font-weight: bold; }
+    .data-tabel { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 30px;}
+    .data-tabel th, .data-tabel td { border: 1px solid black; padding: 8px; text-align: center; vertical-align: middle; color: black; }
+    .data-tabel td:nth-child(4) { text-align: left; }
+    .data-tabel .lanjut-pdf td.merged { border-top: none; border-bottom: none; color: transparent; }
+    .ttd-box { width: 100%; margin-top: 30px; font-size: 14px; text-align: center; border: none;}
+    .ttd-box td { border: none; padding: 10px; vertical-align: bottom; }
+  </style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <h2 style="text-align:center;margin-top:0">Login LHK</h2>
+  <div class="field full" style="margin-bottom:15px"><label>Username / Nama</label><input id="lSheet" placeholder="Nama Lengkap/Singkat"></div>
+  <div class="field full"><label>Password</label><input type="password" id="lPass" placeholder="Password Anda"></div>
+  <button class="primary" style="width:100%;margin-top:20px;padding:12px" onclick="doLogin()">🔒 MASUK</button>
+</div>
+
+<div class="wrap" id="mainScreen">
+  <div id="adminPanel" style="display:none; background:#1f2937; padding:15px; border-radius:15px; margin-bottom:15px; border: 1px solid var(--primary);">
+    <h3 style="margin-top:0; color:#fff; font-size:16px;">🛡️ Panel Akses Pimpinan</h3>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <select id="bawahanSelect" style="flex:1; min-width:200px;"><option value="">-- Daftar Bawahan --</option></select>
+      <button class="primary" onclick="lihatLhkBawahan()">👁️ Lihat LHK</button>
+      <button class="secondary" onclick="kembaliKeLhkSendiri()">🏠 LHK Saya</button>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="top-actions">
+      <button class="secondary" onclick="openSettings()">⚙️ Pengaturan</button>
+      <button class="danger" onclick="doLogout()">🚪 Keluar</button>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+      <div><h1 id="pNama">Memuat...</h1><div id="pModeTampilan" style="color:var(--success);font-size:14px;font-weight:bold;">Tampilan Data Sendiri</div></div>
+    </div>
+    <div class="meta">
+      <div class="item"><small>Jabatan</small><b id="pJabatan">-</b></div>
+      <div class="item"><small>Unit Kerja</small><b id="pUnit">-</b></div>
+      <div class="item"><small>Bulan</small><b id="pBulan">-</b></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="toolbar">
+      <div>
+        <button class="primary" onclick="generateBulan()">📅 Generate Bulan</button>
+        <button class="secondary" onclick="openAdd()">➕ Baris Baru</button>
+      </div>
+      <div>
+        <button class="success" onclick="previewPdf()">👁️ Preview & Unduh PDF</button>
+      </div>
+    </div>
+    <div class="status" id="statusMsg"></div>
+    <div class="table-container">
+      <table id="lhkTable">
+        <thead><tr><th width="40">NO</th><th width="150">HARI / TANGGAL</th><th width="100">PUKUL</th><th>URAIAN KEGIATAN</th><th width="90">BUKTI</th><th width="70">LINK</th><th width="220">AKSI</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Modal Form Entri -->
+<div class="modal" id="modalForm"><div class="dialog">
+  <h2 id="modalTitle">Edit Kegiatan</h2>
+  <input type="hidden" id="arrayIndex"> <input type="hidden" id="insertAfter">
+  <div class="grid">
+    <div class="field"><label>Nomor</label><input id="nomor" type="number"></div>
+    <div class="field" id="tglField"><label>Tanggal (Otomatis)</label>
+      <input type="date" id="tanggalRaw" onchange="formatTanggalIndo()">
+      <input type="hidden" id="tanggalStr">
+    </div>
+    <div class="field full" id="waktuContainer"><label>Pukul Kegiatan</label>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input type="time" id="pukulAwal" style="flex:1;"><span style="color:#fff;"> s/d </span><input type="time" id="pukulAkhir" style="flex:1;">
+      </div>
+    </div>
+    <div class="field"><label>Jumlah Bukti</label><input id="jumlah" placeholder="1 Kegiatan"></div>
+    <div class="field"><label>Link Bukti (Opsional)</label><input id="link"></div>
+    <div class="field full"><label>Uraian Kegiatan</label><textarea id="uraian" rows="5"></textarea></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalForm')">Batal</button><button class="primary" onclick="saveRow()">💾 SIMPAN</button></div>
+</div></div>
+
+<!-- Modal Setting -->
+<div class="modal" id="modalSettings"><div class="dialog">
+  <h2>Pengaturan Profil LHK</h2>
+  <div class="grid">
+    <div class="field full"><label>Bulan Laporan</label><select id="sBulan"></select></div>
+    <div class="field"><label>Ganti Password</label><input type="text" id="sPassword" placeholder="Abaikan jika tidak diganti"></div>
+    <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>DATA PEGAWAI</b></label></div>
+    <div class="field full"><label>Jabatan</label><input id="sJabatan"></div>
+    <div class="field full"><label>Unit Kerja</label>
+      <select id="sUnit">
+        <option value="">-- Pilih Unit Kerja --</option>
+        <option value="Subbagian Keuangan Umum KPU Kab. Labuhanbatu Utara">Subbagian Keuangan Umum KPU Kab. Labuhanbatu Utara</option>
+        <option value="Subbagian Teknis dan Parmas KPU Kab. Labuhanbatu Utara">Subbagian Teknis dan Parmas KPU Kab. Labuhanbatu Utara</option>
+        <option value="Subbagian Rendatin KPU Kab. Labuhanbatu Utara">Subbagian Rendatin KPU Kab. Labuhanbatu Utara</option>
+        <option value="Subbagian Hukum dan SDM KPU Kab. Labuhanbatu Utara">Subbagian Hukum dan SDM KPU Kab. Labuhanbatu Utara</option>
+      </select>
+    </div>
+    <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>ATASAN</b></label>
+      <select id="sPilihAtasan" onchange="pilihAtasan()">
+        <option value="">-- Pilih Manual / Otomatis --</option>
+        <option value="keuangan">Kasubbag Keuangan, Umum, dan Logistik</option>
+        <option value="teknis">Kasubbag Teknis dan Hukum</option>
+        <option value="rendatin">Kasubbag Rendatin</option>
+        <option value="hukum">Kasubbag Hukum dan SDM</option>
+        <option value="sekretaris">Sekretaris</option>
+      </select>
+    </div>
+    <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle"></div>
+    <div class="field"><label>Nama Atasan</label><input id="sAtasanName"></div>
+    <div class="field"><label>NIP Atasan</label><input id="sAtasanNip"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalSettings')">Batal</button><button class="primary" onclick="saveSettings()">💾 SIMPAN</button></div>
+</div></div>
+
+<!-- Modal PDF Viewer -->
+<div class="modal" id="modalPdf">
+  <div class="dialog" style="width: 95%; height: 95vh; max-width: 1000px; display:flex; flex-direction:column;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h2 style="margin:0">Preview Dokumen</h2>
+      <button class="danger" onclick="closeModal('modalPdf')">✖ Tutup</button>
+    </div>
+    <iframe id="pdfFrame"></iframe>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="secondary" style="flex:1; padding:14px;" onclick="eksekusiUnduhPdf()">⬇️ UNDUH PDF LOKAL</button>
+      <button class="primary" style="flex:1; padding:14px;" onclick="eksekusiSimpanKeDrive()">☁️ SIMPAN KE DRIVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE PDF TERSEMBUNYI -->
+<div id="printWadah">
+  <h3>REKAPITULASI CAPAIAN KINERJA HARIAN (LHK)</h3>
+  <table class="kop-tabel">
+    <tr><td width="150">NAMA PEGAWAI</td><td width="10">:</td><td id="pdfNama"></td></tr>
+    <tr><td>JABATAN</td><td>:</td><td id="pdfJabatan"></td></tr>
+    <tr><td>UNIT KERJA</td><td>:</td><td id="pdfUnit"></td></tr>
+    <tr><td>BULAN LAPORAN</td><td>:</td><td id="pdfBulan"></td></tr>
+  </table>
+  <table class="data-tabel">
+    <thead><tr><th width="30">NO</th><th width="120">HARI / TANGGAL</th><th width="90">PUKUL</th><th>URAIAN KEGIATAN</th><th width="70">JUMLAH</th><th width="60">LINK</th></tr></thead>
+    <tbody id="pdfTbody"></tbody>
+  </table>
+  <table class="ttd-box">
+    <tr>
+      <td width="50%" id="pdfTtdKiri"></td>
+      <td width="50%" id="pdfTtdKanan"></td>
+    </tr>
+  </table>
+</div>
+
+<script>
+let cred={loginId:'', password:'', sheetName:''}, profile={}, rows=[];
+let base64PdfUtama = null, targetSheetView = null; 
+
+const DATA_ATASAN = {
+  'keuangan': { title: 'Kasubbag Keuangan, Umum, dan Logistik', name: 'Muhammad Ridwan, S.Pd', nip: '196905211994111001' },
+  'teknis': { title: 'Kasubbag Teknis dan Hukum', name: 'Chairi Asman, SE, M.Si', nip: '198309162009021007' },
+  'rendatin': { title: 'Kasubbag Rendatin', name: 'Fachrur Razi Juned, S.T., M.IP', nip: '198206072009021006' },
+  'hukum': { title: 'Kasubbag Hukum dan SDM', name: 'Muhammad Rajali Siregar, SH', nip: '198703072020121003' },
+  'sekretaris': { title: 'Sekretaris', name: 'Muhammad Azmir Daulay', nip: '198003152009121003' }
+};
+
+function initBulanDropdown() {
+  const sb = document.getElementById('sBulan'), n = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  let opt = ''; for(let y=2025; y<=2027; y++) for(let i=0; i<12; i++) opt += `<option value="${n[i]} ${y}">${n[i]} ${y}</option>`;
+  sb.innerHTML = opt;
+} initBulanDropdown();
+
+async function callApi(action, payload={}) {
+  payload.action = action; payload.loginId = cred.loginId; payload.password = cred.password;
+  payload.aktorLogin = cred.sheetName; payload.targetSheet = targetSheetView; 
+  
+  const res = await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
+  const data = await res.json();
+  if (data.error) throw new Error(data.error); return data;
+}
+
+function doLogin() {
+  cred.loginId = document.getElementById('lSheet').value; cred.password = document.getElementById('lPass').value;
+  if(!cred.loginId || !cred.password) return alert("Wajib diisi!");
+  
+  callApi('login').then((res) => {
+    cred.sheetName = res.sheetName; 
+    document.getElementById('loginScreen').style.display = 'none'; 
+    document.getElementById('mainScreen').style.display = 'block'; 
+    loadData();
+  }).catch(e => { alert(e); });
+}
+
+function doLogout() {
+  cred = {loginId:'', password:'', sheetName:''}; targetSheetView = null;
+  document.getElementById('mainScreen').style.display = 'none'; 
+  document.getElementById('loginScreen').style.display = 'block';
+}
+
+function loadData() {
+  setMsg("Memuat data...", "white");
+  callApi('initial').then(d => {
+    profile = d.profile; rows = d.rows;
+    document.getElementById('pNama').textContent = profile.nama || profile.username; 
+    document.getElementById('pJabatan').textContent = profile.jabatan || '-'; 
+    document.getElementById('pUnit').textContent = profile.unitKerja || '-';
+    document.getElementById('pBulan').textContent = profile.bulanLaporan || '-';
+    
+    if(!targetSheetView) {
+      cekAdminBawahan();
+      document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri";
+    } else {
+      document.getElementById('pModeTampilan').textContent = `Melihat LHK: ${profile.username}`;
+    }
+    renderRows(); setMsg("Data termuat.");
+  }).catch(e => setMsg("Error: "+e, "red"));
+}
+
+function cekAdminBawahan() {
+  callApi('getBawahan').then(d => {
+    if (d.role === 'Super Admin' || d.role === 'Admin') {
+      const panel = document.getElementById('adminPanel'); const sel = document.getElementById('bawahanSelect');
+      if (d.bawahan && d.bawahan.length > 0) {
+        panel.style.display = 'block';
+        sel.innerHTML = '<option value="">-- Pilih LHK Bawahan --</option>' + d.bawahan.map(b => `<option value="${b.sheet}">${b.name} (${b.unit || b.role})</option>`).join('');
+      }
+    }
+  });
+}
+
+function lihatLhkBawahan() {
+  const sel = document.getElementById('bawahanSelect').value;
+  if (!sel) return alert("Pilih bawahan!"); targetSheetView = sel; loadData();
+}
+function kembaliKeLhkSendiri() { targetSheetView = null; loadData(); }
+
+function renderRows() {
+  const tb = document.getElementById('tbody');
+  if(!rows.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px">Belum ada kegiatan.</td></tr>'; return; }
+  
+  tb.innerHTML = rows.map((r, i) => {
+    const isLanjutan = !r.nomor && !r.tanggal;
+    const cl = isLanjutan ? 'class="lanjut-row"' : '';
+    const merged = isLanjutan ? 'class="merged"' : '';
+    return `<tr ${cl}>
+      <td ${merged}>${isLanjutan ? '||' : (r.nomor||'')}</td>
+      <td ${merged} style="font-weight:bold">${isLanjutan ? '' : (r.tanggal||'')}</td>
+      <td ${merged}>${isLanjutan ? '' : (r.pukul||'')}</td>
+      <td>${r.uraian.replace(/\n/g,'<br>')}</td>
+      <td>${r.jumlah||''}</td>
+      <td>${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
+      <td>
+        <div class="action-group">
+          <button class="secondary" onclick="openEdit(${i})">✏️</button>
+          <button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button>
+          <button class="danger" onclick="hapusRow(${i})">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function formatTanggalIndo() {
+  const dRaw = document.getElementById('tanggalRaw').value; if(!dRaw) return;
+  const d = new Date(dRaw); const names = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('tanggalStr').value = `${d.getDate()} ${names[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function openSettings() {
+  document.getElementById('sBulan').value = profile.bulanLaporan || 'Oktober 2026';
+  document.getElementById('sJabatan').value = profile.jabatan || ''; document.getElementById('sUnit').value = profile.unitKerja || ''; document.getElementById('sAtasanTitle').value = profile.atasanTitle || ''; document.getElementById('sAtasanName').value = profile.atasanName || ''; document.getElementById('sAtasanNip').value = profile.atasanNip || ''; 
+  document.getElementById('modalSettings').classList.add('show');
+}
+function pilihAtasan() { const val = document.getElementById('sPilihAtasan').value; if(val && DATA_ATASAN[val]) { document.getElementById('sAtasanTitle').value = DATA_ATASAN[val].title; document.getElementById('sAtasanName').value = DATA_ATASAN[val].name; document.getElementById('sAtasanNip').value = DATA_ATASAN[val].nip; } }
+
+function saveSettings() {
+  setMsg("Menyimpan profil...", "white"); closeModal('modalSettings');
+  const p = { password: document.getElementById('sPassword').value, bulanLaporan: document.getElementById('sBulan').value, jabatan: document.getElementById('sJabatan').value, unitKerja: document.getElementById('sUnit').value, atasanTitle: document.getElementById('sAtasanTitle').value, atasanName: document.getElementById('sAtasanName').value, atasanNip: document.getElementById('sAtasanNip').value };
+  if(p.password) cred.password = p.password;
+  callApi('saveProfile', { profile: p }).then(loadData).catch(e => alert(e));
+}
+
+function generateBulan() {
+  if(!confirm("Buat baris tanggal otomatis untuk bulan ini? (Data lama bulan ini akan dihapus)")) return;
+  const bulanStr = profile.bulanLaporan || 'Oktober 2026';
+  const names = ['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
+  let m = 9, y = 2026;
+  for(let i=0; i<names.length; i++) { if(bulanStr.toLowerCase().includes(names[i])) { m = i; break; } }
+  const match = bulanStr.match(/\b20\d{2}\b/); if(match) y = Number(match[0]);
+  
+  const days = new Date(y, m+1, 0).getDate(); const newRows = []; let no = 1;
+  for(let d = 1; d <= days; d++) {
+      const date = new Date(y, m, d);
+      if(date.getDay() !== 0 && date.getDay() !== 6) {
+          newRows.push({ nomor: no++, tanggal: `${d} ${names[m].charAt(0).toUpperCase() + names[m].slice(1)} ${y}`, pukul: '', uraian: '', jumlah: '', link: '', keterangan: '' });
+      }
+  }
+  rows = newRows;
+  setMsg("Menyimpan Data..."); callApi('syncRows', { rows }).then(loadData);
+}
+
+function openAdd() { 
+  document.getElementById('modalTitle').textContent = 'Tambah Baris Baru'; document.getElementById('arrayIndex').value = ''; document.getElementById('insertAfter').value='';
+  let maxNum = 0; rows.forEach(r => { if(r.nomor && !isNaN(r.nomor)) maxNum = Math.max(maxNum, Number(r.nomor)); });
+  document.getElementById('nomor').value = maxNum + 1; 
+  document.getElementById('tanggalRaw').readOnly = false; document.getElementById('tanggalRaw').value = '';
+  document.getElementById('tanggalStr').value=''; document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; 
+  document.getElementById('waktuContainer').style.display = 'flex'; document.getElementById('modalForm').classList.add('show'); 
+}
+
+function openEdit(index) { 
+  const r = rows[index];
+  document.getElementById('modalTitle').textContent = 'Isi Kegiatan'; document.getElementById('arrayIndex').value = index; document.getElementById('insertAfter').value='';
+  document.getElementById('nomor').value = r.nomor; document.getElementById('tanggalStr').value = r.tanggal; 
+  
+  if(!r.nomor) { 
+      document.getElementById('tanggalRaw').style.display = 'none'; document.getElementById('waktuContainer').style.display = 'none'; 
+  } else { 
+      document.getElementById('tanggalRaw').style.display = 'block'; document.getElementById('waktuContainer').style.display = 'flex'; 
+  }
+  
+  document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value='';
+  if(r.pukul) {
+     const splitJam = r.pukul.replace(' WIB','').split('-');
+     if(splitJam[0]) document.getElementById('pukulAwal').value = splitJam[0].trim();
+     if(splitJam[1]) document.getElementById('pukulAkhir').value = splitJam[1].trim();
+  }
+  document.getElementById('uraian').value = r.uraian; document.getElementById('jumlah').value = r.jumlah; document.getElementById('link').value = r.link; 
+  document.getElementById('modalForm').classList.add('show'); 
+}
+
+function addLanjutan(index) {
+  document.getElementById('modalTitle').textContent = 'Tambah Lanjutan'; document.getElementById('arrayIndex').value = ''; document.getElementById('insertAfter').value = index; 
+  document.getElementById('nomor').value=''; document.getElementById('tanggalStr').value=''; 
+  document.getElementById('tanggalRaw').style.display = 'none'; document.getElementById('waktuContainer').style.display = 'none'; 
+  document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('jumlah').value=''; document.getElementById('link').value=''; 
+  document.getElementById('modalForm').classList.add('show'); 
+}
+
+function saveRow() { 
+  closeModal('modalForm'); setMsg("Menyimpan baris...", "white"); 
+  const index = document.getElementById('arrayIndex').value;
+  const insertAfterVal = document.getElementById('insertAfter').value; 
+  
+  let jamGabungan = '';
+  if(document.getElementById('pukulAwal').value && document.getElementById('pukulAkhir').value) jamGabungan = `${document.getElementById('pukulAwal').value}-${document.getElementById('pukulAkhir').value} WIB`;
+  
+  const newData = {
+    nomor: document.getElementById('nomor').value,
+    tanggal: document.getElementById('tanggalStr').value,
+    pukul: jamGabungan,
+    uraian: document.getElementById('uraian').value,
+    jumlah: document.getElementById('jumlah').value,
+    link: document.getElementById('link').value
+  };
+
+  if(index !== '') {
+    rows[index] = newData; // Update
+  } else if(insertAfterVal !== '') {
+    rows.splice(Number(insertAfterVal) + 1, 0, newData); // Insert Lanjutan di tengah
+  } else {
+    rows.push(newData); // Insert Baru di akhir
+  }
+
+  callApi('syncRows', { rows }).then(loadData);
+}
+
+function hapusRow(index) { 
+    if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } 
+}
+
+// FUNGSI RENDER KE PDF HTML2PDF (TANPA EXCEL)
+function previewPdf() { 
+  setMsg("Sedang membuat layout PDF LHK...", "var(--warning)"); 
+  
+  document.getElementById('pdfNama').textContent = profile.nama || profile.username;
+  document.getElementById('pdfJabatan').textContent = profile.jabatan;
+  document.getElementById('pdfUnit').textContent = profile.unitKerja;
+  document.getElementById('pdfBulan').textContent = profile.bulanLaporan;
+
+  const tb = document.getElementById('pdfTbody');
+  tb.innerHTML = rows.map(r => {
+    const isLanjutan = !r.nomor && !r.tanggal;
+    const cl = isLanjutan ? 'class="lanjut-pdf"' : '';
+    const merged = isLanjutan ? 'class="merged"' : '';
+    return `<tr ${cl}>
+      <td ${merged}>${r.nomor||''}</td>
+      <td ${merged}>${r.tanggal||''}</td>
+      <td ${merged}>${r.pukul||''}</td>
+      <td>${r.uraian.replace(/\n/g,'<br>')}</td>
+      <td>${r.jumlah||''}</td>
+      <td>${r.link||''}</td>
+    </tr>`;
+  }).join('');
+
+  // Logika Tanda Tangan
+  const dateLabel = `Aek Kanopan, ${profile.bulanLaporan}`;
+  document.getElementById('pdfTtdKanan').innerHTML = `${dateLabel}<br>${profile.jabatan}<br><br><br><br><br><b><u>${profile.nama || profile.username}</u></b><br>NIP. -`;
+  
+  if (profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris')) {
+      document.getElementById('pdfTtdKiri').innerHTML = `Diketahui/Disetujui<br>${profile.atasanTitle}<br><br><br><br><br><b><u>${profile.atasanName}</u></b><br>NIP. ${profile.atasanNip}`;
+  } else {
+      document.getElementById('pdfTtdKiri').innerHTML = '';
+  }
+
+  // Generate PDF via html2pdf
+  const el = document.getElementById('printWadah');
+  const opt = { margin: 10, filename: 'LHK.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+  
+  html2pdf().set(opt).from(el).outputPdf('datauristring').then(function(pdfBase64) {
+      base64PdfUtama = pdfBase64;
+      document.getElementById('pdfFrame').src = base64PdfUtama;
+      document.getElementById('modalPdf').classList.add('show');
+      setMsg("Preview PDF berhasil dimuat.", "var(--success)");
+  });
+}
+
+function eksekusiUnduhPdf() {
+  if(!base64PdfUtama) return alert("Dokumen belum siap.");
+  const a = document.createElement('a'); a.href = base64PdfUtama; 
+  a.download = `LHK_${profile.username}_${profile.bulanLaporan}.pdf`; 
+  document.body.appendChild(a); a.click(); a.remove(); 
+  setMsg("PDF berhasil diunduh.", "var(--success)"); closeModal('modalPdf');
+}
+
+function eksekusiSimpanKeDrive() {
+  if(!base64PdfUtama) return alert("Dokumen belum siap.");
+  setMsg("Mengupload ke Google Drive...", "var(--warning)");
+  callApi('simpanPdfKeDrive', { bulanLaporan: profile.bulanLaporan, pdfBase64: base64PdfUtama }).then(res => {
+    setMsg("Berhasil disimpan ke Drive Bulanan!", "var(--success)"); alert("Sukses tersimpan di Google Drive LHK."); closeModal('modalPdf');
+  }).catch(e => alert("Gagal mengupload: " + e));
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function setMsg(m, c="var(--success)") { const sm = document.getElementById('statusMsg'); sm.textContent = m; sm.style.color = c; }
+</script>
+</body>
+</html>
