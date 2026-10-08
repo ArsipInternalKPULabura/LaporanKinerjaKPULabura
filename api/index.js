@@ -61,8 +61,10 @@ export default async function handler(req, res) {
             if (myJabatan.includes('sekretaris') && uJabatan.includes('kasubbag')) {
               bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
             } else if (myJabatan.includes('kasubbag')) {
-              // Kasubbag HANYA melihat user yang mengisi Unit Kerja yang SAMA PERSIS
-              if (u.unit_kerja === myUnit) {
+              let isSugiono = u.username.toLowerCase().includes('sugiono');
+              let isHukumOrKeuangan = myUnit.toLowerCase().includes('hukum dan sdm') || myUnit.toLowerCase().includes('keuangan umum');
+              
+              if (u.unit_kerja === myUnit || (isHukumOrKeuangan && isSugiono)) {
                 bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
               }
             }
