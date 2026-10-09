@@ -510,32 +510,22 @@ function previewPdf() {
   </div>
   `;
 
-  // Inject Element ke Dalam DOM agar ukuran 718px mutlak terbaca (mencegah Blank PDF)
-  const wrapper = document.createElement('div');
-  wrapper.id = 'pdf-temp-wrapper';
-  wrapper.style.position = 'absolute';
-  wrapper.style.top = '-9999px';
-  wrapper.style.left = '0';
-  wrapper.style.width = '718px'; // Lebar tetap presisi A4
-  wrapper.innerHTML = htmlContent;
-  document.body.appendChild(wrapper);
-
-  const opt = {
+    const opt = {
     margin:       10, 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
-    html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 },
+    html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(wrapper).outputPdf('datauristring').then(function(pdfBase64) {
-      document.body.removeChild(wrapper); 
+  // FIX BLANK PDF: Jangan gunakan top: -9999px (karena html2canvas tidak bisa merender area di luar viewport atas).
+  // Cukup lewatkan htmlContent (string) secara langsung ke html2pdf. Library ini akan otomatis merender di background dengan aman.
+  html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
       base64PdfUtama = pdfBase64;
       document.getElementById('pdfFrame').src = base64PdfUtama;
       document.getElementById('modalPdf').classList.add('show');
       setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
   }).catch(e => { 
-      if(document.body.contains(wrapper)) document.body.removeChild(wrapper);
       setMsg("Error merender PDF: " + e, "red"); 
   });
 }
