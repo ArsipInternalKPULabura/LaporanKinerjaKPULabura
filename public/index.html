@@ -386,8 +386,6 @@ function saveRow() {
 
 function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
 
-// --- RENDER PDF CETAK TEPAT A4 (ANTI BLANK/POTONG) ---
-// --- RENDER PDF CETAK TEPAT A4 (ANTI BLANK/POTONG) ---
 function previewPdf() { 
   setMsg("Sedang memproses PDF Presisi A4...", "var(--warning)"); 
   
@@ -511,34 +509,21 @@ function previewPdf() {
   </div>
   `;
 
-  // Buat container fisik sementara agar hasil html2canvas tidak meleset
-  const wrapper = document.createElement('div');
-  wrapper.style.position = 'absolute';
-  wrapper.style.top = '0px';
-  wrapper.style.left = '0px';
-  wrapper.style.width = '718px'; // Kunci ukuran presisi A4 agar tidak terpotong kanannya
-  wrapper.style.backgroundColor = 'white';
-  wrapper.style.zIndex = '-9999';
-  wrapper.innerHTML = htmlContent;
-  document.body.appendChild(wrapper);
-
   const opt = {
     margin:       10, 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
-    // windowWidth sangat penting di sini, memaksa html2canvas memotret selebar 800px (melebihi 718px) terlepas dari ukuran layar device asli.
-    html2canvas:  { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, windowWidth: 800 },
+    // SOLUSI: Penambahan windowWidth: 800 mencegah tabel terpotong saat dirender di HP/layar kecil
+    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, windowWidth: 800 },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(wrapper).outputPdf('datauristring').then(function(pdfBase64) {
-      document.body.removeChild(wrapper);
+  html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
       base64PdfUtama = pdfBase64;
       document.getElementById('pdfFrame').src = base64PdfUtama;
       document.getElementById('modalPdf').classList.add('show');
       setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
   }).catch(e => { 
-      if(document.body.contains(wrapper)) document.body.removeChild(wrapper);
       setMsg("Error merender PDF: " + e, "red"); 
   });
 }
