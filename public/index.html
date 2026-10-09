@@ -490,15 +490,33 @@ function previewPdf() {
   `;
 
   // --- KUNCI PERBAIKAN ---
-  // Buat elemen fisik yang tidak terlihat dengan lebar absolut 800px.
-  // Ini memaksa HTML2PDF membaca kanvas secara penuh meskipun di HP.
+  // 1. Simpan posisi layar pengguna, lalu naikkan ke puncak agar html2canvas tidak memotret area kosong
+  const currentScroll = window.scrollY;
+  window.scrollTo(0, 0);
+
+  // 2. Buat layar loading (overlay) hitam untuk menutupi proses render yang berantakan
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.backgroundColor = 'var(--bg)';
+  overlay.style.zIndex = '99999';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.innerHTML = '<h3 style="color: var(--success); font-family: sans-serif;">Mempersiapkan LHK... Mohon Tunggu.</h3>';
+  document.body.appendChild(overlay);
+
+  // 3. Render dokumen TEPAT DI BAWAH lapisan loading (z-index tinggi, tapi tidak terlihat karena tertutup overlay)
   const wrapper = document.createElement('div');
   wrapper.style.position = 'absolute';
   wrapper.style.top = '0px';
   wrapper.style.left = '0px';
   wrapper.style.width = '800px'; 
   wrapper.style.backgroundColor = 'white';
-  wrapper.style.zIndex = '-9999'; 
+  wrapper.style.zIndex = '99998'; 
   wrapper.innerHTML = htmlContent;
   document.body.appendChild(wrapper);
 
@@ -516,15 +534,20 @@ function previewPdf() {
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  // Render menggunakan "wrapper" fisik yang telah disisipkan ke halaman
   html2pdf().set(opt).from(wrapper).outputPdf('datauristring').then(function(pdfBase64) {
-      document.body.removeChild(wrapper); // Hapus elemen latar belakang
+      // 4. Bersihkan semuanya dan kembalikan layar seperti semula
+      document.body.removeChild(wrapper); 
+      document.body.removeChild(overlay);
+      window.scrollTo(0, currentScroll);
+      
       base64PdfUtama = pdfBase64;
       document.getElementById('pdfFrame').src = base64PdfUtama;
       document.getElementById('modalPdf').classList.add('show');
       setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
   }).catch(e => { 
       if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+      if (document.body.contains(overlay)) document.body.removeChild(overlay);
+      window.scrollTo(0, currentScroll);
       setMsg("Error merender PDF: " + e, "red"); 
   });
 }
