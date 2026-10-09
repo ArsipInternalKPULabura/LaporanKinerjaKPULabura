@@ -443,31 +443,11 @@ function previewPdf() {
     </div>
 
     <table style="width: 100%; border: none; font-size: 11px; margin-bottom: 5px; border-collapse: collapse;">
-      <tr>
-        <td style="width: 100px; padding: 2px 0; border: none; text-align: left;">NAMA</td>
-        <td style="width: 15px; padding: 2px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 2px 0; border: none; text-align: left;">${profile.nama || profile.username || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 2px 0; border: none; text-align: left;">NIP</td>
-        <td style="padding: 2px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 2px 0; border: none; text-align: left;">${profile.nip || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 2px 0; border: none; text-align: left;">JABATAN</td>
-        <td style="padding: 2px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 2px 0; border: none; text-align: left;">${profile.jabatan || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 2px 0; border: none; text-align: left;">UNIT KERJA</td>
-        <td style="padding: 2px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 2px 0; border: none; text-align: left;">${profile.unitKerja || '-'}</td>
-      </tr>
-      <tr>
-        <td style="padding: 2px 0; border: none; text-align: left;">BULAN</td>
-        <td style="padding: 2px 0; border: none; text-align: center;">:</td>
-        <td style="padding: 2px 0; border: none; text-align: left;">${profile.bulanLaporan || '-'}</td>
-      </tr>
+      <tr><td style="width: 100px; padding: 2px 0; border: none; text-align: left;">NAMA</td><td style="width: 15px; padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nama || profile.username || '-'}</td></tr>
+      <tr><td style="padding: 2px 0; border: none; text-align: left;">NIP</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nip || '-'}</td></tr>
+      <tr><td style="padding: 2px 0; border: none; text-align: left;">JABATAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.jabatan || '-'}</td></tr>
+      <tr><td style="padding: 2px 0; border: none; text-align: left;">UNIT KERJA</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.unitKerja || '-'}</td></tr>
+      <tr><td style="padding: 2px 0; border: none; text-align: left;">BULAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.bulanLaporan || '-'}</td></tr>
     </table>
 
     <div style="font-size: 11px; margin-bottom: 10px; text-align: left; text-transform: uppercase;">
@@ -486,13 +466,13 @@ function previewPdf() {
       </colgroup>
       <thead>
         <tr>
-          <th style="padding: 5px; text-align: center; vertical-align: middle; border: 1px solid black;">NO</th>
-          <th style="padding: 5px; text-align: center; vertical-align: middle; border: 1px solid black;">HARI/TANGGAL</th>
-          <th style="padding: 5px; text-align: center; vertical-align: middle; border: 1px solid black;">PUKUL</th>
-          <th style="padding: 5px; text-align: center; vertical-align: middle; border: 1px solid black;">URAIAN KEGIATAN</th>
-          <th style="padding: 5px; text-align: center; vertical-align: middle; border: 1px solid black;">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
-          <th style="padding: 5px; text-align: center; vertical-align: middle; border: 1px solid black;">LINK BUKTI DUKUNG</th>
-          <th style="padding: 5px; text-align: center; vertical-align: middle; border: 1px solid black;">KETERANGAN</th>
+          <th style="padding: 5px; border: 1px solid black;">NO</th>
+          <th style="padding: 5px; border: 1px solid black;">HARI/TANGGAL</th>
+          <th style="padding: 5px; border: 1px solid black;">PUKUL</th>
+          <th style="padding: 5px; border: 1px solid black;">URAIAN KEGIATAN</th>
+          <th style="padding: 5px; border: 1px solid black;">JUMLAH REALISASI</th>
+          <th style="padding: 5px; border: 1px solid black;">LINK BUKTI DUKUNG</th>
+          <th style="padding: 5px; border: 1px solid black;">KETERANGAN</th>
         </tr>
       </thead>
       <tbody>
@@ -509,9 +489,21 @@ function previewPdf() {
   </div>
   `;
 
-  // KUNCI PERBAIKAN: Parameter windowWidth, scrollX, dan scrollY ditambahkan, dan tidak ada duplikasi fungsi
+  // --- KUNCI PERBAIKAN ---
+  // Buat elemen fisik yang tidak terlihat dengan lebar absolut 800px.
+  // Ini memaksa HTML2PDF membaca kanvas secara penuh meskipun di HP.
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'absolute';
+  wrapper.style.top = '0px';
+  wrapper.style.left = '0px';
+  wrapper.style.width = '800px'; 
+  wrapper.style.backgroundColor = 'white';
+  wrapper.style.zIndex = '-9999'; 
+  wrapper.innerHTML = htmlContent;
+  document.body.appendChild(wrapper);
+
   const opt = {
-    margin: [10, 5, 10, 125], // Atas 10mm, Kanan 20mm, Bawah 10mm, Kiri 5mm
+    margin:       10, 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
@@ -524,12 +516,15 @@ function previewPdf() {
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
+  // Render menggunakan "wrapper" fisik yang telah disisipkan ke halaman
+  html2pdf().set(opt).from(wrapper).outputPdf('datauristring').then(function(pdfBase64) {
+      document.body.removeChild(wrapper); // Hapus elemen latar belakang
       base64PdfUtama = pdfBase64;
       document.getElementById('pdfFrame').src = base64PdfUtama;
       document.getElementById('modalPdf').classList.add('show');
       setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
   }).catch(e => { 
+      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
       setMsg("Error merender PDF: " + e, "red"); 
   });
 }
