@@ -386,8 +386,6 @@ function saveRow() {
 
 function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
 
-// --- RENDER PDF CETAK TEPAT A4 (ANTI BLANK/POTONG) ---
-// --- RENDER PDF CETAK TEPAT A4 (ANTI BLANK/POTONG) ---
 function previewPdf() { 
   setMsg("Sedang memproses PDF Presisi A4...", "var(--warning)"); 
   
@@ -436,7 +434,7 @@ function previewPdf() {
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
   const htmlContent = `
-  <div style="width: 718px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
+  <div style="width: 718px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; padding: 10px;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -511,34 +509,27 @@ function previewPdf() {
   </div>
   `;
 
-  // Buat container fisik sementara agar hasil html2canvas tidak meleset
-  const wrapper = document.createElement('div');
-  wrapper.style.position = 'absolute';
-  wrapper.style.top = '0px';
-  wrapper.style.left = '0px';
-  wrapper.style.width = '718px'; // Kunci ukuran presisi A4 agar tidak terpotong kanannya
-  wrapper.style.backgroundColor = 'white';
-  wrapper.style.zIndex = '-9999';
-  wrapper.innerHTML = htmlContent;
-  document.body.appendChild(wrapper);
-
+  // KUNCI PERBAIKAN: Tambahkan parameter windowWidth, scrollX, dan scrollY
   const opt = {
     margin:       10, 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
-    // windowWidth sangat penting di sini, memaksa html2canvas memotret selebar 800px (melebihi 718px) terlepas dari ukuran layar device asli.
-    html2canvas:  { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, windowWidth: 800 },
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      scrollX: 0, 
+      scrollY: 0, 
+      windowWidth: 800 // Memaksa canvas mengambil lebar yang cukup terlepas dari ukuran layar
+    },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(wrapper).outputPdf('datauristring').then(function(pdfBase64) {
-      document.body.removeChild(wrapper);
+  html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
       base64PdfUtama = pdfBase64;
       document.getElementById('pdfFrame').src = base64PdfUtama;
       document.getElementById('modalPdf').classList.add('show');
       setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
   }).catch(e => { 
-      if(document.body.contains(wrapper)) document.body.removeChild(wrapper);
       setMsg("Error merender PDF: " + e, "red"); 
   });
 }
