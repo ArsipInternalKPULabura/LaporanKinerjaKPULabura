@@ -434,8 +434,8 @@ function previewPdf() {
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
   // KUNCI: Lebar diikat kuat pada 740px agar konsisten dan pas di tengah margin A4
-  const htmlContent = `
-  <div style="width: 740px; min-width: 740px; max-width: 740px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
+const htmlContent = `
+  <div style="padding-left: 40px; width: 740px; min-width: 740px; max-width: 740px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -492,7 +492,7 @@ function previewPdf() {
 
   // Tidak ada pembuatan elemen fisik lagi, langsung murni memproses String!
   const opt = {
-    margin:       [10, 15, 10, 75], // Margin seimbang: Atas 10, Kanan 15, Bawah 10, Kiri 15
+    margin:       10,
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
