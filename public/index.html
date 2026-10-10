@@ -426,7 +426,8 @@ function previewPdf() {
         if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
         else break;
       }
-      rowsHtml += `<tr style="page-break-inside: avoid;">
+      // Menyematkan class="kunci-potong" pada setiap baris utama
+      rowsHtml += `<tr class="kunci-potong" style="page-break-inside: avoid;">
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.nomor||''}</td>
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.tanggal||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
@@ -436,7 +437,8 @@ function previewPdf() {
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
       </tr>`;
     } else {
-      rowsHtml += `<tr style="page-break-inside: avoid;">
+      // Menyematkan class="kunci-potong" pada setiap baris lanjutan
+      rowsHtml += `<tr class="kunci-potong" style="page-break-inside: avoid;">
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
@@ -506,8 +508,8 @@ function previewPdf() {
       </tbody>
     </table>
 
-    <!-- Tanda Tangan dikotakkan ke dalam .ttd-container agar sistem membacanya sebagai 1 paket -->
-    <div class="ttd-container" style="page-break-inside: avoid; margin-top: 30px;">
+    <!-- class="kunci-potong" disematkan di div Tanda Tangan, dan diubah menjadi inline-block agar tidak dibelah -->
+    <div class="kunci-potong" style="page-break-inside: avoid; display: inline-block; width: 100%; margin-top: 30px;">
       <table style="width: 100% !important; min-width: 0 !important; font-size: 11px; border: none; border-collapse: collapse;">
         <tr>
           <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
@@ -520,8 +522,8 @@ function previewPdf() {
   `;
 
   const opt = {
-    // ATAS 15, KANAN 0, BAWAH 15, KIRI 0. Kiri-Kanan 0 mempertahankan lebar sempurna.
-    // Atas-Bawah 15mm memberi sistem jarak sensor untuk memindah baris & TTD.
+    // Sisi Kiri (0) dan Kanan (0) mempertahankan desain presisi Anda
+    // Sisi Atas (15) dan Bawah (15) memberikan ruang sensor pemotong kertas
     margin:       [15, 0, 15, 0], 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
@@ -536,8 +538,8 @@ function previewPdf() {
       windowWidth: 800   
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    // Menginstruksikan html2pdf untuk tidak membelah <tr> dan balok tanda tangan
-    pagebreak:    { mode: 'css', avoid: ['tr', '.ttd-container'] } 
+    // Instruksi absolut: HANYA targetkan class '.kunci-potong' untuk dihindari dari pemotongan
+    pagebreak:    { mode: ['css', 'legacy'], avoid: '.kunci-potong' } 
   };
 
   html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
