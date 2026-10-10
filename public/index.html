@@ -412,7 +412,7 @@ function saveRow() {
 
 function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
 
-function previewPdf() { 
+  function previewPdf() { 
   setMsg("Sedang memproses PDF Presisi A4...", "var(--warning)"); 
   
   let rowsHtml = '';
@@ -426,7 +426,8 @@ function previewPdf() {
         if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
         else break;
       }
-      rowsHtml += `<tr>
+      // KUNCI 1: Menambahkan style page-break-inside: avoid pada <tr>
+      rowsHtml += `<tr style="page-break-inside: avoid; break-inside: avoid;">
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.nomor||''}</td>
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.tanggal||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
@@ -436,7 +437,8 @@ function previewPdf() {
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
       </tr>`;
     } else {
-      rowsHtml += `<tr>
+      // KUNCI 1: Menambahkan style page-break-inside: avoid pada <tr> lanjutan
+      rowsHtml += `<tr style="page-break-inside: avoid; break-inside: avoid;">
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
@@ -459,9 +461,8 @@ function previewPdf() {
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
-  // KUNCI: box-sizing: border-box dan padding ditambahkan ke dalam elemen, agar lebar tabel aman di dalam 800px.
   const htmlContent = `
-  <div style="width: 800px; box-sizing: border-box; padding: 40px 20px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; margin: 0; text-align: left;">
+  <div style="width: 800px; box-sizing: border-box; padding: 0 20px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; margin: 0; text-align: left;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -507,7 +508,7 @@ function previewPdf() {
       </tbody>
     </table>
 
-    <table style="width: 100% !important; min-width: 0 !important; margin-top: 30px; font-size: 11px; border: none; page-break-inside: avoid; border-collapse: collapse;">
+    <table style="width: 100% !important; min-width: 0 !important; margin-top: 30px; font-size: 11px; border: none; page-break-inside: avoid; border-collapse: collapse; break-inside: avoid;">
       <tr>
         <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
         <td style="width: 10%; border: none; padding: 0;"></td>
@@ -517,9 +518,9 @@ function previewPdf() {
   </div>
   `;
 
-  // KUNCI: Margin PDF diset 0. html2canvas diset tepat 800px agar bertindak murni seperti gambar full halaman.
   const opt = {
-    margin:       0, 
+    // KUNCI 2: Margin diubah jadi [Atas, Kanan, Bawah, Kiri]. Kiri dan Kanan 0 agar tetap full width.
+    margin:       [10, 0, 10, 0], 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
@@ -533,7 +534,8 @@ function previewPdf() {
       windowWidth: 800   
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { avoid: 'tr' }
+    // KUNCI 3: Kombinasi CSS dan elemen untuk pagebreak
+    pagebreak:    { mode: ['css', 'legacy'], avoid: 'tr' } 
   };
 
   html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
