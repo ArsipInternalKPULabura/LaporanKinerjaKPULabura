@@ -459,9 +459,9 @@ function previewPdf() {
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
-  // min-width: 0 !important mematikan CSS global (min-width: 850px) agar tabel fit to page
+  // KUNCI 1: Hapus margin: 0 auto. Ganti margin: 0 agar menempel tepat di ujung kiri 0px.
   const htmlContent = `
-  <div style="width: 740px; margin: 0 auto; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
+  <div style="width: 760px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; margin: 0; padding: 0; text-align: left;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -517,11 +517,21 @@ function previewPdf() {
   </div>
   `;
 
+  // KUNCI 2: Memaksa koordinat potret TEPAT dari piksel paling kiri (x: 0, y: 0) dan mematok lebar pastinya ke 760
   const opt = {
     margin:       10, 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
-    html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 },
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0,
+      width: 760,        // Sama dengan ukuran div di atas
+      windowWidth: 760   // Sama dengan ukuran div di atas
+    },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
