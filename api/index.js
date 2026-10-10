@@ -1,18 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { google } from 'googleapis';
-import stream from 'stream';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  },
-  scopes: ['https://www.googleapis.com/auth/drive'], 
-});
-
-const drive = google.drive({ version: 'v3', auth });
-const BASE_FOLDER_ID = '1PMha227_Z5yUWW2xnFuOJ_2ktWDIwWvu'; 
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,25 +21,16 @@ export default async function handler(req, res) {
         .select('*').or(`sheet_name.eq.${loginId},username.eq.${loginId}`).eq('password', password).single();
 
       if (!user) {
-        // Hanya Super Admin yang di-hardcode. Sisanya otomatis dari setting profil.
         let autoRole = (String(loginId).toLowerCase() === 'superadmin') ? 'Super Admin' : 'User';
-
         const { data: newUser, error: insertErr } = await supabase.from('users').insert([{
-          sheet_name: loginId, 
-          username: loginId, 
-          nama: loginId, 
-          password: password, 
-          role: autoRole,
-          jabatan: '' 
+          sheet_name: loginId, username: loginId, nama: loginId, password: password, role: autoRole, jabatan: '' 
         }]).select().single();
-
         if (insertErr) return res.json({ error: "Username tidak ditemukan atau Password salah." });
         user = newUser;
       }
       return res.json({ ok: true, message: "Login berhasil", sheetName: user.sheet_name });
     }
 
-    // Mengambil daftar atasan langsung dari Database (Dinamis)
     if (action === 'getAtasanList') {
       const { data: atasan } = await supabase.from('users')
         .select('nama, username, nip, jabatan, ttd_base64')
@@ -99,6 +79,21 @@ export default async function handler(req, res) {
       return res.json({ ok: true, bawahan: bawahanList, role: isSuperAdmin ? 'Super Admin' : ((isSekretaris || isKasubbag) ? 'Admin' : 'User') });
     }
 
+    // FITUR BARU: Mengecek jumlah baris LHK milik bawahan (Untuk Pantauan Atasan)
+    if (action === 'cekStatusLhk') {
+        const { listBawahanSheets } = payload;
+        if (!listBawahanSheets || listBawahanSheets.length === 0) return res.json({ ok: true, data: {} });
+        
+        const { data: rowsData } = await supabase.from('lhk_data').select('sheet_name').in('sheet_name', listBawahanSheets);
+        
+        let statusCount = {};
+        listBawahanSheets.forEach(s => statusCount[s] = 0);
+        if (rowsData) {
+            rowsData.forEach(r => { statusCount[r.sheet_name] += 1; });
+        }
+        return res.json({ ok: true, data: statusCount });
+    }
+
     if (action === 'initial') {
       const { data: user } = await supabase.from('users').select('*').eq('sheet_name', targetSheet).single();
       const { data: dbRows } = await supabase.from('lhk_data').select('*').eq('sheet_name', targetSheet).order('sort_order', { ascending: true });
@@ -114,11 +109,8 @@ export default async function handler(req, res) {
 
     if (action === 'saveProfile') {
       const { profile, ttdBase64, ttdAtasanBase64 } = payload;
-      
       let unitKerjaBaru = profile.unitKerja;
-      if(unitKerjaBaru && unitKerjaBaru.includes("Subbagian Keuangan Umum")) {
-         unitKerjaBaru = unitKerjaBaru.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
-      }
+      if(unitKerjaBaru && unitKerjaBaru.includes("Subbagian Keuangan Umum")) unitKerjaBaru = unitKerjaBaru.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
 
       let updateData = {
         nama: profile.nama, nip: profile.nip, atasan_title: profile.atasanTitle, atasan_name: profile.atasanName,
@@ -134,10 +126,8 @@ export default async function handler(req, res) {
         const j = String(profile.jabatan).toLowerCase();
         const un = String(profile.username).toLowerCase();
         if(un === 'superadmin') updateData.role = 'Super Admin';
-        // Otomatis menaikkan Role menjadi Admin jika Jabatannya Kasubbag / Sekretaris
         else updateData.role = (j.includes('sekretaris') || j.includes('kasubbag')) ? 'Admin' : 'User';
       }
-
       await supabase.from('users').update(updateData).eq('sheet_name', targetSheet);
       return res.json({ ok: true });
     }
@@ -145,7 +135,6 @@ export default async function handler(req, res) {
     if (action === 'syncRows') {
       const { rows } = payload;
       await supabase.from('lhk_data').delete().eq('sheet_name', targetSheet);
-      
       if (rows && rows.length > 0) {
         const insertData = rows.map((r, i) => ({
           sheet_name: targetSheet, nomor: r.nomor || '', tanggal: r.tanggal || '', pukul: r.pukul || '',
@@ -156,31 +145,6 @@ export default async function handler(req, res) {
       return res.json({ ok: true });
     }
 
-    if (action === 'simpanPdfKeDrive') {
-      const folderName = payload.bulanLaporan || 'Tanpa Bulan';
-      let folderId;
-      const qFolder = `'${BASE_FOLDER_ID}' in parents and name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
-      const searchRes = await drive.files.list({ q: qFolder, fields: 'files(id)' });
-      
-      if (searchRes.data.files.length > 0) { folderId = searchRes.data.files[0].id; } 
-      else {
-        const createRes = await drive.files.create({ requestBody: { name: folderName, mimeType: 'application/vnd.google-apps.folder', parents: [BASE_FOLDER_ID] }, fields: 'id' });
-        folderId = createRes.data.id;
-      }
-
-      const fileName = `LHK_${targetSheet}_${folderName}.pdf`;
-      const qOldFile = `'${folderId}' in parents and name = '${fileName}' and trashed = false`;
-      const oldFiles = await drive.files.list({ q: qOldFile });
-      for (let f of oldFiles.data.files) { await drive.files.update({ fileId: f.id, requestBody: { trashed: true } }); }
-
-      const pdfBuffer = Buffer.from(payload.pdfBase64.split(',')[1], 'base64');
-      const bufferStream = new stream.PassThrough(); bufferStream.end(pdfBuffer);
-      
-      const uploadRes = await drive.files.create({ requestBody: { name: fileName, parents: [folderId] }, media: { mimeType: 'application/pdf', body: bufferStream }, fields: 'webViewLink' });
-      return res.json({ ok: true, url: uploadRes.data.webViewLink });
-    }
-
     return res.json({ error: "Aksi tidak dikenali." });
-
   } catch (err) { return res.status(500).json({ error: err.message || String(err) }); }
 }
