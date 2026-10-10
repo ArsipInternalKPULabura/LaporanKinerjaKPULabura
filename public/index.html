@@ -533,6 +533,7 @@ function previewPdf() {
       windowWidth: 800   
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    pagebreak:    { avoid: 'tr' }
   };
 
   html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
