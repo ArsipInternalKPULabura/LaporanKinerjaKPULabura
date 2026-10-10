@@ -433,9 +433,9 @@ function previewPdf() {
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
-  // Desain HTML dibersihkan menjadi proporsional 760px tanpa offset padding yang aneh
+  // Mengubah width menjadi 710px agar menarik batas kanan sedikit ke dalam
   const htmlContent = `
-  <div style="width: 760px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; padding: 10px; box-sizing: border-box;">
+  <div style="width: 710px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; padding: 10px; box-sizing: border-box;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -491,7 +491,6 @@ function previewPdf() {
   `;
 
   const opt = {
-    // Memberi jarak aman pada setiap sisi kertas A4 (10 milimeter)
     margin:       10, 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
@@ -499,7 +498,6 @@ function previewPdf() {
       scale: 2, 
       useCORS: true, 
       windowWidth: 800,
-      // MENGUNCI KOORDINAT: Memaksa kamera memotret tepat dari ujung kiri paling atas
       x: 0,
       y: 0,
       scrollX: 0,
