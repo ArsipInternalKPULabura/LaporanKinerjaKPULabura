@@ -79,19 +79,23 @@ export default async function handler(req, res) {
       return res.json({ ok: true, bawahan: bawahanList, role: isSuperAdmin ? 'Super Admin' : ((isSekretaris || isKasubbag) ? 'Admin' : 'User') });
     }
 
-    // FITUR BARU: Mengecek jumlah baris LHK milik bawahan (Untuk Pantauan Atasan)
+    // CEK STATUS UPLOAD BAWAHAN (Mengambil boolean centang dari Users)
     if (action === 'cekStatusLhk') {
         const { listBawahanSheets } = payload;
         if (!listBawahanSheets || listBawahanSheets.length === 0) return res.json({ ok: true, data: {} });
         
-        const { data: rowsData } = await supabase.from('lhk_data').select('sheet_name').in('sheet_name', listBawahanSheets);
+        const { data: usersData } = await supabase.from('users').select('sheet_name, status_upload').in('sheet_name', listBawahanSheets);
         
-        let statusCount = {};
-        listBawahanSheets.forEach(s => statusCount[s] = 0);
-        if (rowsData) {
-            rowsData.forEach(r => { statusCount[r.sheet_name] += 1; });
-        }
-        return res.json({ ok: true, data: statusCount });
+        let statusMap = {};
+        if (usersData) { usersData.forEach(u => { statusMap[u.sheet_name] = u.status_upload; }); }
+        return res.json({ ok: true, data: statusMap });
+    }
+
+    // UPDATE STATUS UPLOAD GDRIVE
+    if (action === 'updateStatusUpload') {
+        const { isUploaded } = payload;
+        await supabase.from('users').update({ status_upload: isUploaded }).eq('sheet_name', targetSheet);
+        return res.json({ ok: true });
     }
 
     if (action === 'initial') {
@@ -102,7 +106,7 @@ export default async function handler(req, res) {
         nama: user?.nama || '', nip: user?.nip || '', jabatan: user?.jabatan || '', unitKerja: user?.unit_kerja || '',
         bulanLaporan: user?.bulan_laporan || 'Oktober 2026', username: user?.username || targetSheet,
         atasanTitle: user?.atasan_title || '', atasanName: user?.atasan_name || '', atasanNip: user?.atasan_nip || '',
-        ttdBase64: user?.ttd_base64 || '', ttdAtasanBase64: user?.ttd_atasan_base64 || ''
+        ttdBase64: user?.ttd_base64 || '', ttdAtasanBase64: user?.ttd_atasan_base64 || '', status_upload: user?.status_upload || false
       };
       return res.json({ profile, rows: dbRows || [] });
     }
@@ -115,19 +119,14 @@ export default async function handler(req, res) {
       let updateData = {
         nama: profile.nama, nip: profile.nip, atasan_title: profile.atasanTitle, atasan_name: profile.atasanName,
         atasan_nip: profile.atasanNip, username: profile.username || targetSheet, unit_kerja: unitKerjaBaru, 
-        jabatan: profile.jabatan, bulan_laporan: profile.bulanLaporan
+        bulan_laporan: profile.bulanLaporan
       };
+      
+      // Jabatan tidak lagi diizinkan diupdate dari form (Readonly)
       if (profile.password) updateData.password = profile.password;
       if (ttdBase64 !== undefined) updateData.ttd_base64 = ttdBase64;
       if (ttdAtasanBase64 !== undefined) updateData.ttd_atasan_base64 = ttdAtasanBase64;
 
-      const { data: currUser } = await supabase.from('users').select('role').eq('sheet_name', targetSheet).single();
-      if (currUser && currUser.role !== 'Super Admin') {
-        const j = String(profile.jabatan).toLowerCase();
-        const un = String(profile.username).toLowerCase();
-        if(un === 'superadmin') updateData.role = 'Super Admin';
-        else updateData.role = (j.includes('sekretaris') || j.includes('kasubbag')) ? 'Admin' : 'User';
-      }
       await supabase.from('users').update(updateData).eq('sheet_name', targetSheet);
       return res.json({ ok: true });
     }
