@@ -433,9 +433,9 @@ function previewPdf() {
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
-  // Mengubah width menjadi 710px agar menarik batas kanan sedikit ke dalam
+  // Lebar diubah menjadi 700px agar lebih ramping dan aman dari potongan kanan
   const htmlContent = `
-  <div style="width: 710px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; padding: 10px; box-sizing: border-box;">
+  <div style="width: 700px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; padding: 10px; box-sizing: border-box;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -491,7 +491,9 @@ function previewPdf() {
   `;
 
   const opt = {
-    margin:       10, 
+    // Margin diatur manual: [Atas 10, Kanan 10, Bawah 10, Kiri 2]
+    // Jarak kiri diubah jadi 2mm saja agar tabel tertarik ke kiri.
+    margin:       [10, 10, 10, 2], 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
