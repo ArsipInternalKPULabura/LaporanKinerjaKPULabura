@@ -459,8 +459,9 @@ function previewPdf() {
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
+  // PERBAIKAN: Menggunakan width: 100% murni agar fit to page A4 (mengisi sisa margin). 
   const htmlContent = `
-  <div style="width: 710px; max-width: 710px; margin: 0 auto; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
+  <div style="width: 100%; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -496,7 +497,7 @@ function previewPdf() {
           <th style="padding: 5px; border: 1px solid black;">HARI/TANGGAL</th>
           <th style="padding: 5px; border: 1px solid black;">PUKUL</th>
           <th style="padding: 5px; border: 1px solid black;">URAIAN KEGIATAN</th>
-          <th style="padding: 5px; border: 1px solid black;">JUMLAH REALISASI<br>BUKTI DUKUNG</th> <!-- Perbaikan: Mengembalikan teks Bukti Dukung yang hilang -->
+          <th style="padding: 5px; border: 1px solid black;">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
           <th style="padding: 5px; border: 1px solid black;">LINK BUKTI DUKUNG</th>
           <th style="padding: 5px; border: 1px solid black;">KETERANGAN</th>
         </tr>
@@ -508,21 +509,28 @@ function previewPdf() {
 
     <table style="width: 100%; margin-top: 30px; font-size: 11px; border: none; page-break-inside: avoid; border-collapse: collapse;">
       <tr>
-        <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
-        <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
+        <!-- PERBAIKAN TTD: Porsi kolom diubah jadi 35% agar TTD Atasan tergeser lebih ke pinggir kiri -->
+        <td style="width: 35%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
+        <td style="width: 30%; border: none; padding: 0;"></td> <!-- Ruang kosong di tengah -->
+        <td style="width: 35%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
       </tr>
     </table>
   </div>
   `;
 
+  // PERBAIKAN KONFIGURASI: Mengunci titik awal foto di kiri-atas (x:0, y:0)
   const opt = {
-    margin:       [10, 10, 10, 10], // Margin aman seimbang di semua sisi
+    margin:       10, 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
       scale: 2, 
       useCORS: true, 
-      windowWidth: 730 // Perbaikan: Menyesuaikan viewport agar html2canvas tidak memotong sisa sisi kanan
+      windowWidth: 794, // Kunci di standar lebar A4 piksel
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
