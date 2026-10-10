@@ -7,6 +7,8 @@
   <meta name="theme-color" content="#121212">
   <link rel="manifest" href="manifest.json">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #3a3a3a; --primary: #3b82f6; --danger: #cf6679; --success: #03dac6; --table-bg: #252525; }
@@ -412,144 +414,156 @@ function saveRow() {
 
 function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
 
-function previewPdf() { 
-  setMsg("Sedang memproses PDF Presisi A4...", "var(--warning)"); 
-  
-  let rowsHtml = '';
-  for (let i = 0; i < rows.length; i++) {
-    let r = rows[i];
-    let isLanjutan = !r.nomor && !r.tanggal;
-    
-    if (!isLanjutan) {
-      let rowspan = 1;
-      for (let j = i + 1; j < rows.length; j++) {
-        if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
-        else break;
+function previewPdf() {
+  setMsg("Memproses PDF Presisi Vektor...", "var(--warning)");
+
+  try {
+    // Memanggil mesin pembuat PDF murni
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4'); // Kertas Portrait, Milimeter, Ukuran A4
+
+    // ==========================================
+    // 1. MENGGAMBAR KOP JUDUL
+    // ==========================================
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("REKAP LAPORAN CAPAIAN KINERJA", 105, 15, { align: "center" });
+    doc.text("APARATUR SIPIL NEGARA (ASN)", 105, 20, { align: "center" });
+    doc.text("KPU PROVINSI SUMATERA UTARA", 105, 25, { align: "center" });
+
+    // ==========================================
+    // 2. MENGGAMBAR BIODATA PENGGUNA
+    // ==========================================
+    doc.autoTable({
+      startY: 32,
+      theme: 'plain',
+      styles: { fontSize: 10, cellPadding: 1, textColor: 0, font: "helvetica" },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 5, halign: 'center' },
+        2: { cellWidth: 160 }
+      },
+      body: [
+        ['NAMA', ':', profile.nama || profile.username || '-'],
+        ['NIP', ':', profile.nip || '-'],
+        ['JABATAN', ':', profile.jabatan || '-'],
+        ['UNIT KERJA', ':', profile.unitKerja || '-'],
+        ['BULAN', ':', profile.bulanLaporan || '-']
+      ]
+    });
+
+    let finalY = doc.lastAutoTable.finalY;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT", 10, finalY + 5);
+
+    // ==========================================
+    // 3. MENYUSUN STRUKTUR TABEL (ANTI TERBELAH)
+    // ==========================================
+    let tableBody = [];
+    for (let i = 0; i < rows.length; i++) {
+      let r = rows[i];
+      let isLanjutan = !r.nomor && !r.tanggal;
+      let rowData = [];
+
+      // Logika rowspan (penggabungan sel) untuk baris utama dan lanjutan
+      if (!isLanjutan) {
+        let rowspan = 1;
+        for (let j = i + 1; j < rows.length; j++) {
+          if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
+          else break;
+        }
+        rowData.push({ content: r.nomor || '', rowSpan: rowspan });
+        rowData.push({ content: r.tanggal || '', rowSpan: rowspan });
       }
-      // Menyematkan class="kunci-potong" pada setiap baris utama
-      rowsHtml += `<tr class="kunci-potong" style="page-break-inside: avoid;">
-        <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.nomor||''}</td>
-        <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.tanggal||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
-      </tr>`;
-    } else {
-      // Menyematkan class="kunci-potong" pada setiap baris lanjutan
-      rowsHtml += `<tr class="kunci-potong" style="page-break-inside: avoid;">
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
-      </tr>`;
+      
+      // AutoTable mendukung enter (\n) secara bawaan
+      rowData.push(r.pukul || '');
+      rowData.push(r.uraian || '');
+      rowData.push(r.jumlah || '');
+      rowData.push(r.link || '');
+      rowData.push(r.keterangan || '');
+
+      tableBody.push(rowData);
     }
+
+    // ==========================================
+    // 4. MENGGAMBAR TABEL UTAMA KE DALAM A4
+    // ==========================================
+    doc.autoTable({
+      startY: finalY + 8,
+      theme: 'grid',
+      headStyles: { fillColor: [255, 255, 255], textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
+      bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
+      styles: { font: "helvetica", fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+      head: [['NO', 'HARI/TANGGAL', 'PUKUL', 'URAIAN KEGIATAN', 'JUMLAH REALISASI\nBUKTI DUKUNG', 'LINK BUKTI DUKUNG', 'KETERANGAN']],
+      body: tableBody,
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: 25 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 55, halign: 'center' },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 33 }, // Teks link panjang otomatis turun ke bawah tanpa memotong tabel
+        6: { cellWidth: 25 }
+      },
+      margin: { left: 10, right: 10 }, // Lebar akan otomatis presisi di kertas A4 (Margin kiri-kanan mutlak 10mm)
+      rowPageBreak: 'avoid' // KUNCI: Baris tabel tidak akan dipotong di tengah-tengah
+    });
+
+    // ==========================================
+    // 5. MENGGAMBAR TANDA TANGAN (1 PAKET UTUH)
+    // ==========================================
+    finalY = doc.lastAutoTable.finalY;
+
+    // Cek jika ruang sisa di bawah kertas kurang dari 50mm, otomatis pindah halaman baru!
+    if (finalY > 230) {
+        doc.addPage();
+        finalY = 20; // Mulai dari atas di halaman baru
+    }
+
+    const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    let blnStr = profile.bulanLaporan || 'Oktober 2026';
+    let mIdx = 9; let yyyy = 2026;
+    for(let i=0; i<months.length; i++) { if(blnStr.toLowerCase().includes(months[i].toLowerCase())) { mIdx = i; break; } }
+    const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]);
+    const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
+    const dateLabel = "Aek Kanopan, " + lastDay + " " + months[mIdx] + " " + yyyy;
+
+    doc.setFontSize(10);
+    
+    // TANDA TANGAN KIRI (ATASAN)
+    if (profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris')) {
+        doc.text("Diketahui/Disetujui", 50, finalY + 15, { align: "center" });
+        doc.text(profile.atasanTitle, 50, finalY + 20, { align: "center" });
+        if (profile.ttdAtasanBase64) {
+           try { doc.addImage(profile.ttdAtasanBase64, 30, finalY + 22, 40, 20); } catch(e){}
+        }
+        doc.text(profile.atasanName, 50, finalY + 48, { align: "center" });
+        doc.text("NIP. " + profile.atasanNip, 50, finalY + 53, { align: "center" });
+    }
+
+    // TANDA TANGAN KANAN (PEMBUAT)
+    doc.text(dateLabel, 150, finalY + 10, { align: "center" });
+    doc.text(profile.jabatan, 150, finalY + 15, { align: "center" });
+    if (profile.ttdBase64) {
+         try { doc.addImage(profile.ttdBase64, 130, finalY + 17, 40, 20); } catch(e){}
+    }
+    doc.text(profile.nama || profile.username, 150, finalY + 43, { align: "center" });
+    doc.text("NIP. " + (profile.nip || '-'), 150, finalY + 48, { align: "center" });
+
+    // ==========================================
+    // 6. RENDER HASIL PDF
+    // ==========================================
+    base64PdfUtama = doc.output('datauristring');
+    document.getElementById('pdfFrame').src = base64PdfUtama;
+    document.getElementById('modalPdf').classList.add('show');
+    setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
+
+  } catch (error) {
+    setMsg("Gagal: Pastikan 2 script jspdf & autotable sudah dimasukkan ke index.html!", "red");
+    console.error(error);
   }
-
-  const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  let blnStr = profile.bulanLaporan || 'Oktober 2026';
-  let mIdx = 9; let yyyy = 2026;
-  for(let i=0; i<months.length; i++) { if(blnStr.toLowerCase().includes(months[i].toLowerCase())) { mIdx = i; break; } }
-  const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]);
-  const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
-  const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
-
-  const ttdKiri = profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris') ? 
-    `Diketahui/Disetujui<br>${profile.atasanTitle}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdAtasanBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdAtasanBase64?1:0};"></div>${profile.atasanName}<br>NIP. ${profile.atasanNip}` : '';
-    
-  const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
-
-  const htmlContent = `
-  <div style="width: 800px; box-sizing: border-box; padding: 0 20px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; margin: 0; text-align: left;">
-    
-    <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
-      REKAP LAPORAN CAPAIAN KINERJA<br>
-      APARATUR SIPIL NEGARA (ASN)<br>
-      KPU PROVINSI SUMATERA UTARA
-    </div>
-
-    <table style="width: 100% !important; min-width: 0 !important; border: none; font-size: 11px; margin-bottom: 5px; border-collapse: collapse;">
-      <tr><td style="width: 100px; padding: 2px 0; border: none; text-align: left;">NAMA</td><td style="width: 15px; padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nama || profile.username || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">NIP</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nip || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">JABATAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.jabatan || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">UNIT KERJA</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.unitKerja || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">BULAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.bulanLaporan || '-'}</td></tr>
-    </table>
-
-    <div style="font-size: 11px; margin-bottom: 10px; text-align: left; text-transform: uppercase;">
-      JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT
-    </div>
-
-    <table style="width: 100% !important; min-width: 0 !important; border-collapse: collapse; font-size: 10px; table-layout: fixed; word-wrap: break-word; border: 1px solid black;">
-      <colgroup>
-        <col style="width: 4%;">
-        <col style="width: 14%;">
-        <col style="width: 14%;">
-        <col style="width: 28%;">
-        <col style="width: 10%;">
-        <col style="width: 16%;">
-        <col style="width: 14%;">
-      </colgroup>
-      <thead>
-        <tr>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">NO</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">HARI/TANGGAL</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">PUKUL</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">URAIAN KEGIATAN</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">LINK BUKTI DUKUNG</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">KETERANGAN</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml}
-      </tbody>
-    </table>
-
-    <!-- class="kunci-potong" disematkan di div Tanda Tangan, dan diubah menjadi inline-block agar tidak dibelah -->
-    <div class="kunci-potong" style="page-break-inside: avoid; display: inline-block; width: 100%; margin-top: 30px;">
-      <table style="width: 100% !important; min-width: 0 !important; font-size: 11px; border: none; border-collapse: collapse;">
-        <tr>
-          <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
-          <td style="width: 10%; border: none; padding: 0;"></td>
-          <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
-        </tr>
-      </table>
-    </div>
-  </div>
-  `;
-
-  const opt = {
-    // Sisi Kiri (0) dan Kanan (0) mempertahankan desain presisi Anda
-    // Sisi Atas (15) dan Bawah (15) memberikan ruang sensor pemotong kertas
-    margin:       [15, 0, 15, 0], 
-    filename:     'LHK.pdf',
-    image:        { type: 'jpeg', quality: 1 },
-    html2canvas:  { 
-      scale: 2, 
-      useCORS: true, 
-      x: 0,
-      y: 0,
-      scrollX: 0,
-      scrollY: 0,
-      width: 800,        
-      windowWidth: 800   
-    },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    // Instruksi absolut: HANYA targetkan class '.kunci-potong' untuk dihindari dari pemotongan
-    pagebreak:    { mode: ['css', 'legacy'], avoid: '.kunci-potong' } 
-  };
-
-  html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
-      base64PdfUtama = pdfBase64;
-      document.getElementById('pdfFrame').src = base64PdfUtama;
-      document.getElementById('modalPdf').classList.add('show');
-      setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
-  }).catch(e => { 
-      setMsg("Error merender PDF: " + e, "red"); 
-  });
 }
 
 function eksekusiUnduhPdf() {
