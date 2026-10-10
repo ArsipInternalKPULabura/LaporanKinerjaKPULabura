@@ -426,8 +426,7 @@ function previewPdf() {
         if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
         else break;
       }
-      // Menyisipkan class="jangan-potong" tanpa mengubah desain
-      rowsHtml += `<tr class="jangan-potong" style="page-break-inside: avoid; break-inside: avoid;">
+      rowsHtml += `<tr style="page-break-inside: avoid;">
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.nomor||''}</td>
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.tanggal||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
@@ -437,8 +436,7 @@ function previewPdf() {
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
       </tr>`;
     } else {
-      // Menyisipkan class="jangan-potong" pada baris lanjutan
-      rowsHtml += `<tr class="jangan-potong" style="page-break-inside: avoid; break-inside: avoid;">
+      rowsHtml += `<tr style="page-break-inside: avoid;">
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
@@ -462,7 +460,7 @@ function previewPdf() {
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
   const htmlContent = `
-  <div style="width: 800px; box-sizing: border-box; padding: 40px 20px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; margin: 0; text-align: left;">
+  <div style="width: 800px; box-sizing: border-box; padding: 0 20px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; margin: 0; text-align: left;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -492,8 +490,7 @@ function previewPdf() {
         <col style="width: 16%;">
         <col style="width: 14%;">
       </colgroup>
-      <!-- Header berulang dipasang di sini dengan hati-hati agar tidak merusak lebar tabel -->
-      <thead style="display: table-header-group;">
+      <thead>
         <tr>
           <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">NO</th>
           <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">HARI/TANGGAL</th>
@@ -509,19 +506,23 @@ function previewPdf() {
       </tbody>
     </table>
 
-    <!-- class="jangan-potong" disisipkan di tag tabel agar TTD aman sebagai satu kesatuan -->
-    <table class="jangan-potong" style="width: 100% !important; min-width: 0 !important; margin-top: 30px; font-size: 11px; border: none; page-break-inside: avoid; border-collapse: collapse;">
-      <tr>
-        <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
-        <td style="width: 10%; border: none; padding: 0;"></td>
-        <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
-      </tr>
-    </table>
+    <!-- Tanda Tangan dikotakkan ke dalam .ttd-container agar sistem membacanya sebagai 1 paket -->
+    <div class="ttd-container" style="page-break-inside: avoid; margin-top: 30px;">
+      <table style="width: 100% !important; min-width: 0 !important; font-size: 11px; border: none; border-collapse: collapse;">
+        <tr>
+          <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
+          <td style="width: 10%; border: none; padding: 0;"></td>
+          <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
+        </tr>
+      </table>
+    </div>
   </div>
   `;
 
   const opt = {
-    margin:       0, 
+    // ATAS 15, KANAN 0, BAWAH 15, KIRI 0. Kiri-Kanan 0 mempertahankan lebar sempurna.
+    // Atas-Bawah 15mm memberi sistem jarak sensor untuk memindah baris & TTD.
+    margin:       [15, 0, 15, 0], 
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
@@ -535,8 +536,8 @@ function previewPdf() {
       windowWidth: 800   
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    // Menggunakan class khusus ".jangan-potong" untuk mencegah pemisahan baris/TTD
-    pagebreak:    { mode: ['css', 'legacy'], avoid: ['.jangan-potong'] } 
+    // Menginstruksikan html2pdf untuk tidak membelah <tr> dan balok tanda tangan
+    pagebreak:    { mode: 'css', avoid: ['tr', '.ttd-container'] } 
   };
 
   html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
