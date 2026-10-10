@@ -349,24 +349,50 @@ function openAdd() {
 
 function openEdit(index) { 
   const r = rows[index];
-  document.getElementById('modalTitle').textContent = 'Isi Kegiatan'; document.getElementById('arrayIndex').value = index; document.getElementById('insertAfter').value='';
-  document.getElementById('nomor').value = r.nomor; document.getElementById('tanggalStr').value = r.tanggal; 
-  if(!r.nomor) { document.getElementById('tanggalRaw').style.display = 'none'; document.getElementById('waktuContainer').style.display = 'none'; } else { document.getElementById('tanggalRaw').style.display = 'block'; document.getElementById('waktuContainer').style.display = 'flex'; }
+  document.getElementById('modalTitle').textContent = 'Isi Kegiatan'; 
+  document.getElementById('arrayIndex').value = index; 
+  document.getElementById('insertAfter').value='';
+  document.getElementById('nomor').value = r.nomor; 
+  document.getElementById('tanggalStr').value = r.tanggal; 
+  
+  // Perbaikan: Pastikan input Pukul selalu muncul saat mengedit baris mana pun
+  if(!r.nomor) { 
+    document.getElementById('tanggalRaw').style.display = 'none'; 
+  } else { 
+    document.getElementById('tanggalRaw').style.display = 'block'; 
+  }
+  document.getElementById('waktuContainer').style.display = 'flex'; 
+
   document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value='';
   if(r.pukul) {
      const splitJam = r.pukul.replace(' WIB','').split('-');
      if(splitJam[0]) document.getElementById('pukulAwal').value = splitJam[0].trim();
      if(splitJam[1]) document.getElementById('pukulAkhir').value = splitJam[1].trim();
   }
-  document.getElementById('uraian').value = r.uraian; document.getElementById('jumlah').value = r.jumlah; document.getElementById('link').value = r.link; document.getElementById('keterangan').value = r.keterangan || '';
+  document.getElementById('uraian').value = r.uraian; 
+  document.getElementById('jumlah').value = r.jumlah; 
+  document.getElementById('link').value = r.link; 
+  document.getElementById('keterangan').value = r.keterangan || '';
   document.getElementById('modalForm').classList.add('show'); 
 }
 
 function addLanjutan(index) {
-  document.getElementById('modalTitle').textContent = 'Tambah Lanjutan'; document.getElementById('arrayIndex').value = ''; document.getElementById('insertAfter').value = index; 
-  document.getElementById('nomor').value=''; document.getElementById('tanggalStr').value=''; 
-  document.getElementById('tanggalRaw').style.display = 'none'; document.getElementById('waktuContainer').style.display = 'none'; 
-  document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('jumlah').value=''; document.getElementById('link').value=''; document.getElementById('keterangan').value=''; 
+  document.getElementById('modalTitle').textContent = 'Tambah Lanjutan'; 
+  document.getElementById('arrayIndex').value = ''; 
+  document.getElementById('insertAfter').value = index; 
+  document.getElementById('nomor').value=''; 
+  document.getElementById('tanggalStr').value=''; 
+  
+  // Perbaikan: Tampilkan kolom waktu (Pukul) untuk Lanjutan
+  document.getElementById('tanggalRaw').style.display = 'none'; 
+  document.getElementById('waktuContainer').style.display = 'flex'; 
+  
+  document.getElementById('uraian').value=''; 
+  document.getElementById('pukulAwal').value=''; 
+  document.getElementById('pukulAkhir').value=''; 
+  document.getElementById('jumlah').value=''; 
+  document.getElementById('link').value=''; 
+  document.getElementById('keterangan').value=''; 
   document.getElementById('modalForm').classList.add('show'); 
 }
 
@@ -404,18 +430,18 @@ function previewPdf() {
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.nomor||''}</td>
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.tanggal||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
+        <td style="padding:6px 4px; text-align:left; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
+        <td style="padding:6px 4px; text-align:left; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
       </tr>`;
     } else {
       rowsHtml += `<tr>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
+        <td style="padding:6px 4px; text-align:left; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
+        <td style="padding:6px 4px; text-align:left; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
       </tr>`;
     }
   }
@@ -433,9 +459,8 @@ function previewPdf() {
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
-  // KUNCI PERBAIKAN: Gunakan lebar mutlak 190mm agar pas di A4 (210mm - margin 20mm)
   const htmlContent = `
-  <div style="width: 190mm; max-width: 190mm; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; padding: 0;">
+  <div style="width: 710px; max-width: 710px; margin: 0 auto; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -471,7 +496,7 @@ function previewPdf() {
           <th style="padding: 5px; border: 1px solid black;">HARI/TANGGAL</th>
           <th style="padding: 5px; border: 1px solid black;">PUKUL</th>
           <th style="padding: 5px; border: 1px solid black;">URAIAN KEGIATAN</th>
-          <th style="padding: 5px; border: 1px solid black;">JUMLAH REALISASI</th>
+          <th style="padding: 5px; border: 1px solid black;">JUMLAH REALISASI<br>BUKTI DUKUNG</th> <!-- Perbaikan: Mengembalikan teks Bukti Dukung yang hilang -->
           <th style="padding: 5px; border: 1px solid black;">LINK BUKTI DUKUNG</th>
           <th style="padding: 5px; border: 1px solid black;">KETERANGAN</th>
         </tr>
@@ -491,12 +516,13 @@ function previewPdf() {
   `;
 
   const opt = {
-    margin:       10, // Margin diseimbangkan otomatis menjadi 10mm di setiap sisi
+    margin:       [10, 10, 10, 10], // Margin aman seimbang di semua sisi
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
       scale: 2, 
-      useCORS: true
+      useCORS: true, 
+      windowWidth: 730 // Perbaikan: Menyesuaikan viewport agar html2canvas tidak memotong sisa sisi kanan
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
