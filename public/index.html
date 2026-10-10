@@ -262,7 +262,7 @@ let listAtasanDB = [];
 let listBawahanSheets = []; // Disimpan untuk cek status
 let currentRole = 'User';
 
-// Format Tanggal Cerdas & Rapi
+// Format Tanggal Cerdas & Rapi (BUG DIPERBAIKI)
 function formatTanggalLengkap(tglStr) {
   if (!tglStr) return '';
   if (tglStr.includes(',')) return tglStr; 
@@ -281,7 +281,9 @@ function formatTanggalLengkap(tglStr) {
   
   const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  return `${namaHari[d.getDay()]}, ${d.getDate()} ${namaBulan[d.getMonth()} ${d.getFullYear()}`;
+  
+  // Perbaikan bug penutup array yang sebelumnya kurang bracket "]"
+  return `${namaHari[d.getDay()]}, ${d.getDate()} ${namaBulan[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 function initBulanDropdown() {
@@ -509,10 +511,10 @@ function cekNotifikasi() {
     if(!notifTime || Notification.permission !== "granted") return;
     const now = new Date();
     const currTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    if(currTime === notifTime && now.getSeconds() === 0) { // Bunyi tepat pada jam:menit:00
+    if(currTime === notifTime && now.getSeconds() === 0) { 
       new Notification("LHK KPU - Pengingat Laporan", { body: "Waktunya mengisi Laporan Harian Kinerja (LHK) Anda hari ini!", icon: "https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg" });
     }
-  }, 1000); // Cek tiap detik
+  }, 1000); 
 }
 
 function generateBulan() {
