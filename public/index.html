@@ -422,11 +422,10 @@ function previewPdf() {
     const doc = new jsPDF('p', 'mm', 'a4'); 
 
     // ==========================================
-    // 1. MENGGAMBAR KOP JUDUL
+    // 1. MENGGAMBAR KOP JUDUL (Tengah Kertas A4: 105mm)
     // ==========================================
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    // Posisi teks di tengah kertas A4 (105mm)
     doc.text("REKAP LAPORAN CAPAIAN KINERJA", 105, 15, { align: "center" });
     doc.text("APARATUR SIPIL NEGARA (ASN)", 105, 20, { align: "center" });
     doc.text("KPU PROVINSI SUMATERA UTARA", 105, 25, { align: "center" });
@@ -438,11 +437,11 @@ function previewPdf() {
       startY: 32,
       theme: 'plain',
       styles: { fontSize: 10, cellPadding: 1, textColor: 0, font: "helvetica" },
-      margin: { left: 0, right: 0 }, // Dikandas habis ke kiri
+      margin: { left: 15, right: 10 }, // KIRI 1.5 cm (15mm), KANAN 1 cm (10mm)
       columnStyles: {
         0: { cellWidth: 25 },
         1: { cellWidth: 5, halign: 'center' },
-        2: { cellWidth: 180 } // Total lebar persis 210mm
+        2: { cellWidth: 155 } // Total lebar persis 185mm
       },
       body: [
         ['NAMA', ':', profile.nama || profile.username || '-'],
@@ -456,8 +455,8 @@ function previewPdf() {
     let finalY = doc.lastAutoTable.finalY;
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    // Diberi jarak 2mm dari ujung agar teks tidak terpotong printer fisik
-    doc.text("JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT", 2, finalY + 5);
+    // Teks digeser mengikuti margin kiri 1.5 cm (15mm)
+    doc.text("JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT", 15, finalY + 5);
 
     // ==========================================
     // 3. MENYUSUN STRUKTUR TABEL 
@@ -488,7 +487,7 @@ function previewPdf() {
     }
 
     // ==========================================
-    // 4. MENGGAMBAR TABEL (KANDAS KIRI-KANAN)
+    // 4. MENGGAMBAR TABEL UTAMA
     // ==========================================
     doc.autoTable({
       startY: finalY + 8,
@@ -498,17 +497,17 @@ function previewPdf() {
       styles: { font: "helvetica", fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
       head: [['NO', 'HARI/TANGGAL', 'PUKUL', 'URAIAN\nKEGIATAN', 'JUMLAH\nREALISASI\nBUKTI DUKUNG', 'LINK\nBUKTI DUKUNG', 'KETERANGAN']],
       body: tableBody,
-      // Total lebar sekarang persis 210mm (Ukuran utuh kertas A4)
+      // Total lebar kolom 185mm (Membagi porsi agar teks tidak terpotong)
       columnStyles: {
         0: { cellWidth: 10 },
-        1: { cellWidth: 30 }, 
-        2: { cellWidth: 20 }, 
-        3: { cellWidth: 55, halign: 'center' }, // Tambahan ruang lega
-        4: { cellWidth: 28 }, 
-        5: { cellWidth: 40 }, // Tambahan ruang lega
-        6: { cellWidth: 27 }  
+        1: { cellWidth: 26 }, 
+        2: { cellWidth: 18 }, 
+        3: { cellWidth: 47, halign: 'center' }, 
+        4: { cellWidth: 25 }, 
+        5: { cellWidth: 34 }, 
+        6: { cellWidth: 25 }  
       },
-      margin: { left: 0, right: 0 }, // KUNCI: Margin kiri 0, margin kanan 0
+      margin: { left: 15, right: 10 }, // KIRI 1.5 cm (15mm), KANAN 1 cm (10mm)
       rowPageBreak: 'avoid' 
     });
 
@@ -517,7 +516,8 @@ function previewPdf() {
     // ==========================================
     finalY = doc.lastAutoTable.finalY;
 
-    if (finalY > 230) {
+    // Jika sisa ruang kurang dari 5 cm (50mm), pindah halaman
+    if (finalY > 235) {
         doc.addPage();
         finalY = 20; 
     }
@@ -532,24 +532,26 @@ function previewPdf() {
 
     doc.setFontSize(10);
     
-    // Tanda tangan digeser sedikit menyesuaikan pelebaran area
+    // Tanda tangan digeser agar pas dengan margin baru
+    // Tanda Tangan Kiri (Center di kordinat 55)
     if (profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris')) {
-        doc.text("Diketahui/Disetujui", 45, finalY + 15, { align: "center" });
-        doc.text(profile.atasanTitle, 45, finalY + 20, { align: "center" });
+        doc.text("Diketahui/Disetujui", 55, finalY + 15, { align: "center" });
+        doc.text(profile.atasanTitle, 55, finalY + 20, { align: "center" });
         if (profile.ttdAtasanBase64) {
-           try { doc.addImage(profile.ttdAtasanBase64, 25, finalY + 22, 40, 20); } catch(e){}
+           try { doc.addImage(profile.ttdAtasanBase64, 35, finalY + 22, 40, 20); } catch(e){}
         }
-        doc.text(profile.atasanName, 45, finalY + 48, { align: "center" });
-        doc.text("NIP. " + profile.atasanNip, 45, finalY + 53, { align: "center" });
+        doc.text(profile.atasanName, 55, finalY + 48, { align: "center" });
+        doc.text("NIP. " + profile.atasanNip, 55, finalY + 53, { align: "center" });
     }
 
-    doc.text(dateLabel, 165, finalY + 10, { align: "center" });
-    doc.text(profile.jabatan, 165, finalY + 15, { align: "center" });
+    // Tanda Tangan Kanan (Center di kordinat 160)
+    doc.text(dateLabel, 160, finalY + 10, { align: "center" });
+    doc.text(profile.jabatan, 160, finalY + 15, { align: "center" });
     if (profile.ttdBase64) {
-         try { doc.addImage(profile.ttdBase64, 145, finalY + 17, 40, 20); } catch(e){}
+         try { doc.addImage(profile.ttdBase64, 140, finalY + 17, 40, 20); } catch(e){}
     }
-    doc.text(profile.nama || profile.username, 165, finalY + 43, { align: "center" });
-    doc.text("NIP. " + (profile.nip || '-'), 165, finalY + 48, { align: "center" });
+    doc.text(profile.nama || profile.username, 160, finalY + 43, { align: "center" });
+    doc.text("NIP. " + (profile.nip || '-'), 160, finalY + 48, { align: "center" });
 
     // ==========================================
     // 6. RENDER HASIL PDF
