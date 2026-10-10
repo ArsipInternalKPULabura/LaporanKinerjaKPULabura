@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #3a3a3a; --primary: #3b82f6; --danger: #cf6679; --success: #03dac6; --table-bg: #252525; }
@@ -43,6 +43,16 @@
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .full { grid-column: 1 / -1; } .field label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #9e9e9e; }
     #loginScreen { max-width: 400px; margin: 100px auto; background: var(--card); padding: 30px; border-radius: 20px; } #mainScreen { display: none; }
     #pdfFrame { width: 100%; flex: 1; border: none; border-radius: 10px; background: #fff; min-height: 60vh; margin-bottom:15px; }
+
+    /* Merapikan Form Edit Isi Kegiatan */
+    #modalForm .modal-content { padding: 25px; border-radius: 12px; }
+    #modalForm .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+    #modalForm .form-group label { font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #333; }
+    #modalForm .form-group input, #modalForm .form-group textarea { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
+    #modalForm .form-group textarea { resize: vertical; min-height: 80px; }
+    #waktuContainer { display: flex; gap: 10px; align-items: center; }
+    #waktuContainer input { flex: 1; }
+    #waktuContainer span { font-weight: bold; }
   </style>
 </head>
 <body>
@@ -104,7 +114,7 @@
 </div>
 
 <div class="modal" id="modalForm"><div class="dialog">
-  <h2 id="modalTitle">Edit Kegiatan</h2>
+  <h2 id="modalTitle">Isi Kegiatan</h2>
   <input type="hidden" id="arrayIndex"> <input type="hidden" id="insertAfter">
   <div class="grid">
     <div class="field"><label>Nomor (Otomatis)</label><input id="nomor" type="number" readonly style="background:#2a2a2a; color:#888;" title="Auto Generate"></div>
@@ -136,7 +146,7 @@
     <div class="field"><label>Unit Kerja</label>
       <select id="sUnit">
         <option value="">-- Pilih Unit Kerja --</option>
-        <option value="Subbagian Keuangan Umum KPU Kab. Labuhanbatu Utara">Subbagian Keuangan Umum KPU Kab. Labuhanbatu Utara</option>
+        <option value="Subbagian Keuangan, Umum dan Logistik KPU Kab. Labuhanbatu Utara">Subbagian Keuangan, Umum dan Logistik KPU Kab. Labuhanbatu Utara</option>
         <option value="Subbagian Teknis dan Parmas KPU Kab. Labuhanbatu Utara">Subbagian Teknis dan Parmas KPU Kab. Labuhanbatu Utara</option>
         <option value="Subbagian Rendatin KPU Kab. Labuhanbatu Utara">Subbagian Rendatin KPU Kab. Labuhanbatu Utara</option>
         <option value="Subbagian Hukum dan SDM KPU Kab. Labuhanbatu Utara">Subbagian Hukum dan SDM KPU Kab. Labuhanbatu Utara</option>
@@ -186,6 +196,20 @@ const DATA_ATASAN = {
   'sekretaris': { title: 'Sekretaris', name: 'Muhammad Azmir Daulay', nip: '198003152009121003' }
 };
 
+// Fungsi Format Tanggal Cerdas
+function formatTanggalLengkap(tglStr) {
+  if (!tglStr) return '';
+  if (tglStr.includes(',')) return tglStr; 
+  
+  const d = new Date(tglStr);
+  if (isNaN(d)) return tglStr; 
+  
+  const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  
+  return `${namaHari[d.getDay()]}, ${d.getDate()} ${namaBulan[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 function initBulanDropdown() {
   const sb = document.getElementById('sBulan'), n = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   let opt = ''; for(let y=2025; y<=2027; y++) for(let i=0; i<12; i++) opt += `<option value="${n[i]} ${y}">${n[i]} ${y}</option>`;
@@ -221,7 +245,12 @@ function loadData() {
     profile = d.profile; rows = d.rows;
     document.getElementById('pNama').textContent = profile.nama || profile.username; 
     document.getElementById('pJabatan').textContent = profile.jabatan || '-'; 
-    document.getElementById('pUnit').textContent = profile.unitKerja || '-';
+    
+    // Perbaikan UI Unit Kerja
+    let unitFix = profile.unitKerja || '-';
+    if(unitFix.includes("Subbagian Keuangan Umum")) unitFix = unitFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
+    document.getElementById('pUnit').textContent = unitFix;
+    
     document.getElementById('pBulan').textContent = profile.bulanLaporan || '-';
     
     if(!targetSheetView) { cekAdminBawahan(); document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri"; } 
@@ -263,7 +292,7 @@ function renderRowsUI() {
       }
       html += `<tr>
         <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e; border: 1px solid #555;">${r.nomor}</td>
-        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e; font-weight:bold; border: 1px solid #555;">${r.tanggal}</td>
+        <td rowspan="${rowspan}" style="text-align:center; vertical-align:middle; background:#1e1e1e; font-weight:bold; border: 1px solid #555;">${formatTanggalLengkap(r.tanggal)}</td>
         <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.pukul}</td>
         <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.uraian.replace(/\n/g,'<br>')}</td>
         <td style="text-align:center; vertical-align:middle; border: 1px solid #555;">${r.jumlah||''}</td>
@@ -301,7 +330,11 @@ function openSettings() {
   document.getElementById('sNama').value = profile.nama || ''; 
   document.getElementById('sNip').value = profile.nip || ''; 
   document.getElementById('sJabatan').value = profile.jabatan || ''; 
-  document.getElementById('sUnit').value = profile.unitKerja || ''; 
+  
+  let unitFix = profile.unitKerja || '';
+  if(unitFix.includes("Subbagian Keuangan Umum")) unitFix = unitFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
+  document.getElementById('sUnit').value = unitFix; 
+  
   document.getElementById('sAtasanTitle').value = profile.atasanTitle || ''; 
   document.getElementById('sAtasanName').value = profile.atasanName || ''; 
   document.getElementById('sAtasanNip').value = profile.atasanNip || ''; 
@@ -362,7 +395,6 @@ function openEdit(index) {
   } else { 
     document.getElementById('tanggalRaw').style.display = 'block'; 
   }
-  // Memastikan input pukul selalu muncul
   document.getElementById('waktuContainer').style.display = 'flex'; 
 
   document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value='';
@@ -386,7 +418,6 @@ function addLanjutan(index) {
   document.getElementById('tanggalStr').value=''; 
   
   document.getElementById('tanggalRaw').style.display = 'none'; 
-  // Memastikan input pukul selalu muncul untuk "Lanjut"
   document.getElementById('waktuContainer').style.display = 'flex'; 
   
   document.getElementById('uraian').value=''; 
@@ -429,21 +460,22 @@ function previewPdf() {
     doc.text("KPU PROVINSI SUMATERA UTARA", 105, 25, { align: "center" });
 
     // 2. BIODATA PENGGUNA
+    let unitKerjaFix = profile.unitKerja || '-';
+    if(unitKerjaFix.includes("Subbagian Keuangan Umum")) {
+        unitKerjaFix = unitKerjaFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
+    }
+
     doc.autoTable({
       startY: 32,
       theme: 'plain',
       styles: { fontSize: 10, cellPadding: 1, textColor: 0, font: "helvetica" },
-      margin: { left: 2, right: 2 }, // Margin tipis 2mm
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 5, halign: 'center' },
-        2: { cellWidth: 176 } // Total 206mm
-      },
+      margin: { left: 2, right: 2 }, 
+      columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 5, halign: 'center' }, 2: { cellWidth: 176 } },
       body: [
         ['NAMA', ':', profile.nama || profile.username || '-'],
         ['NIP', ':', profile.nip || '-'],
         ['JABATAN', ':', profile.jabatan || '-'],
-        ['UNIT KERJA', ':', profile.unitKerja || '-'],
+        ['UNIT KERJA', ':', unitKerjaFix],
         ['BULAN', ':', profile.bulanLaporan || '-']
       ]
     });
@@ -467,10 +499,10 @@ function previewPdf() {
           else break;
         }
         rowData.push({ content: r.nomor || '', rowSpan: rowspan });
-        rowData.push({ content: r.tanggal || '', rowSpan: rowspan });
+        rowData.push({ content: formatTanggalLengkap(r.tanggal), rowSpan: rowspan });
       }
       
-      rowData.push(r.pukul || '');
+      rowData.push((r.pukul || '').trim());
       rowData.push(r.uraian || '');
       rowData.push(r.jumlah || '');
       rowData.push(r.link || '');
@@ -479,35 +511,33 @@ function previewPdf() {
       tableBody.push(rowData);
     }
 
-    // 4. TABEL UTAMA (LEBAR 206mm)
+    // 4. TABEL UTAMA
     doc.autoTable({
       startY: finalY + 8,
       theme: 'grid',
-      headStyles: { fillColor: [255, 255, 255], textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
+      // PERBAIKAN: cellPadding.top = 4 agar huruf P di PUKUL punya ruang napas
+      headStyles: { fillColor: [255, 255, 255], textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle', cellPadding: { top: 4, bottom: 2, left: 2, right: 2 } },
       bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
       styles: { font: "helvetica", fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
       head: [['NO', 'HARI/TANGGAL', 'PUKUL', 'URAIAN\nKEGIATAN', 'JUMLAH\nREALISASI\nBUKTI DUKUNG', 'LINK\nBUKTI DUKUNG', 'KETERANGAN']],
       body: tableBody,
       columnStyles: {
         0: { cellWidth: 10 },
-        1: { cellWidth: 30 }, // Aman untuk kata HARI/TANGGAL
-        2: { cellWidth: 18 }, 
-        3: { cellWidth: 53, halign: 'center' }, 
-        4: { cellWidth: 28 }, // Aman untuk kata REALISASI
-        5: { cellWidth: 39 }, 
-        6: { cellWidth: 28 }  // Aman untuk kata KETERANGAN
+        1: { cellWidth: 32 }, 
+        2: { cellWidth: 20 }, 
+        3: { cellWidth: 50, halign: 'center' }, 
+        4: { cellWidth: 28 }, 
+        5: { cellWidth: 38 }, 
+        6: { cellWidth: 28 }  
       },
-      margin: { left: 2, right: 2 }, // Margin tipis 2mm agar tidak kandas 0
+      margin: { left: 2, right: 2 }, 
       rowPageBreak: 'avoid' 
     });
 
-    // 5. TANDA TANGAN
+    // 5. TANDA TANGAN (AUTO TABLE TRANSPARAN AGAR SEJAJAR)
     finalY = doc.lastAutoTable.finalY;
 
-    if (finalY > 230) {
-        doc.addPage();
-        finalY = 20; 
-    }
+    if (finalY > 220) { doc.addPage(); finalY = 20; }
 
     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     let blnStr = profile.bulanLaporan || 'Oktober 2026';
@@ -515,27 +545,59 @@ function previewPdf() {
     for(let i=0; i<months.length; i++) { if(blnStr.toLowerCase().includes(months[i].toLowerCase())) { mIdx = i; break; } }
     const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]);
     const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
-    const dateLabel = "Aek Kanopan, " + lastDay + " " + months[mIdx] + " " + yyyy;
+    const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
 
-    doc.setFontSize(10);
+    const isSekretaris = profile.jabatan.toLowerCase().includes('sekretaris');
     
-    if (profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris')) {
-        doc.text("Diketahui/Disetujui", 45, finalY + 15, { align: "center" });
-        doc.text(profile.atasanTitle, 45, finalY + 20, { align: "center" });
-        if (profile.ttdAtasanBase64) {
-           try { doc.addImage(profile.ttdAtasanBase64, 25, finalY + 22, 40, 20); } catch(e){}
+    doc.autoTable({
+      startY: finalY + 10,
+      theme: 'plain',
+      styles: { halign: 'center', cellPadding: 1, fontSize: 10, font: "helvetica", textColor: 0 },
+      margin: { left: 10, right: 10 },
+      columnStyles: {
+        0: { cellWidth: 85 }, // Kolom Kiri
+        1: { cellWidth: 20 }, // Jarak Tengah
+        2: { cellWidth: 85 }  // Kolom Kanan
+      },
+      body: [
+        [
+          (profile.atasanTitle && !isSekretaris) ? "Diketahui/Disetujui" : "", 
+          "", 
+          dateLabel
+        ],
+        [
+          (profile.atasanTitle && !isSekretaris) ? profile.atasanTitle : "", 
+          "", 
+          profile.jabatan
+        ],
+        [
+          "\n\n\n", // Ruang TTD Gambar
+          "", 
+          "\n\n\n"
+        ],
+        [
+          (profile.atasanTitle && !isSekretaris) ? profile.atasanName : "", 
+          "", 
+          profile.nama || profile.username
+        ],
+        [
+          (profile.atasanTitle && !isSekretaris) ? "NIP. " + profile.atasanNip : "", 
+          "", 
+          "NIP. " + (profile.nip || '-')
+        ]
+      ],
+      didDrawCell: function(data) {
+        // Render Gambar TTD secara persis di sel yang kosong (\n\n\n)
+        if (data.row.index === 2) { 
+          if (data.column.index === 0 && profile.ttdAtasanBase64 && !isSekretaris) {
+             try { doc.addImage(profile.ttdAtasanBase64, 'JPEG', data.cell.x + 22, data.cell.y + 2, 40, 20); } catch(e){}
+          }
+          if (data.column.index === 2 && profile.ttdBase64) {
+             try { doc.addImage(profile.ttdBase64, 'JPEG', data.cell.x + 22, data.cell.y + 2, 40, 20); } catch(e){}
+          }
         }
-        doc.text(profile.atasanName, 45, finalY + 48, { align: "center" });
-        doc.text("NIP. " + profile.atasanNip, 45, finalY + 53, { align: "center" });
-    }
-
-    doc.text(dateLabel, 165, finalY + 10, { align: "center" });
-    doc.text(profile.jabatan, 165, finalY + 15, { align: "center" });
-    if (profile.ttdBase64) {
-         try { doc.addImage(profile.ttdBase64, 145, finalY + 17, 40, 20); } catch(e){}
-    }
-    doc.text(profile.nama || profile.username, 165, finalY + 43, { align: "center" });
-    doc.text("NIP. " + (profile.nip || '-'), 165, finalY + 48, { align: "center" });
+      }
+    });
 
     // 6. RENDER HASIL PDF
     base64PdfUtama = doc.output('datauristring');
@@ -566,7 +628,6 @@ function eksekusiSimpanKeDrive() {
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function setMsg(m, c="var(--success)") { const sm = document.getElementById('statusMsg'); sm.textContent = m; sm.style.color = c; }  
 
-  
 </script>
 </body>
 </html>
