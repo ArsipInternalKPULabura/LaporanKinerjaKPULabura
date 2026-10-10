@@ -41,37 +41,51 @@ export default async function handler(req, res) {
       return res.json({ ok: true, message: "Login berhasil", sheetName: user.sheet_name });
     }
 
+    // LOGIKA HAK AKSES PINTAR (SUPER ADMIN, SEKRETARIS, KASUBBAG)
     if (action === 'getBawahan') {
       const { data: me } = await supabase.from('users').select('*').eq('sheet_name', aktorLogin).single();
       const { data: allUsers } = await supabase.from('users').select('*');
       
       let bawahanList = [];
       const myRole = me?.role || 'User';
-      const myUnit = me?.unit_kerja || '';
       const myJabatan = (me?.jabatan || '').toLowerCase();
+      const myName = (me?.username || '').toLowerCase();
 
-      if (myRole === 'Super Admin' || myRole === 'Admin') {
+      // Cek Status Admin
+      const isSuperAdmin = (myRole === 'Super Admin' || myName === 'superadmin' || myName === 'admin');
+      const isSekretaris = myJabatan.includes('sekretaris');
+      const isKasubbag = myJabatan.includes('kasubbag');
+
+      if (isSuperAdmin || isSekretaris || isKasubbag) {
         for (let u of allUsers) {
           if (u.sheet_name === aktorLogin) continue;
-          let uJabatan = (u.jabatan || '').toLowerCase();
           
-          if (myRole === 'Super Admin') {
+          let uUnit = (u.unit_kerja || '').toLowerCase();
+          
+          if (isSuperAdmin || isSekretaris) {
+            // Super Admin & Sekretaris bisa lihat semua orang
             bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
-          } else if (myRole === 'Admin') {
-            if (myJabatan.includes('sekretaris') && uJabatan.includes('kasubbag')) {
-              bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
-            } else if (myJabatan.includes('kasubbag')) {
-              let isSugiono = u.username.toLowerCase().includes('sugiono');
-              let isHukumOrKeuangan = myUnit.toLowerCase().includes('hukum dan sdm') || myUnit.toLowerCase().includes('keuangan umum');
-              
-              if (u.unit_kerja === myUnit || (isHukumOrKeuangan && isSugiono)) {
+          } else if (isKasubbag) {
+            // Kasubbag hanya melihat unit kerjanya sendiri
+            let targetUnit = "";
+            if (myJabatan.includes('keuangan') || myJabatan.includes('umum') || myJabatan.includes('logistik')) {
+                targetUnit = "subbagian keuangan, umum dan logistik";
+            } else if (myJabatan.includes('teknis') || myJabatan.includes('parmas')) {
+                targetUnit = "subbagian teknis dan parmas";
+            } else if (myJabatan.includes('rendatin')) {
+                targetUnit = "subbagian rendatin";
+            } else if (myJabatan.includes('hukum') || myJabatan.includes('sdm')) {
+                targetUnit = "subbagian hukum dan sdm";
+            }
+
+            // Mentoleransi nama lama "Keuangan Umum" 
+            if (uUnit.includes(targetUnit) || (targetUnit.includes('keuangan') && uUnit.includes('keuangan umum'))) {
                 bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
-              }
             }
           }
         }
       }
-      return res.json({ ok: true, bawahan: bawahanList, role: myRole });
+      return res.json({ ok: true, bawahan: bawahanList, role: isSuperAdmin ? 'Super Admin' : ((isSekretaris || isKasubbag) ? 'Admin' : 'User') });
     }
 
     if (action === 'initial') {
@@ -89,9 +103,16 @@ export default async function handler(req, res) {
 
     if (action === 'saveProfile') {
       const { profile, ttdBase64, ttdAtasanBase64 } = payload;
+      
+      // Auto-replace Unit Kerja lama jika ada
+      let unitKerjaBaru = profile.unitKerja;
+      if(unitKerjaBaru && unitKerjaBaru.includes("Subbagian Keuangan Umum")) {
+         unitKerjaBaru = unitKerjaBaru.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
+      }
+
       let updateData = {
         nama: profile.nama, nip: profile.nip, atasan_title: profile.atasanTitle, atasan_name: profile.atasanName,
-        atasan_nip: profile.atasanNip, username: profile.username || targetSheet, unit_kerja: profile.unitKerja, 
+        atasan_nip: profile.atasanNip, username: profile.username || targetSheet, unit_kerja: unitKerjaBaru, 
         jabatan: profile.jabatan, bulan_laporan: profile.bulanLaporan
       };
       if (profile.password) updateData.password = profile.password;
@@ -101,7 +122,9 @@ export default async function handler(req, res) {
       const { data: currUser } = await supabase.from('users').select('role').eq('sheet_name', targetSheet).single();
       if (currUser && currUser.role !== 'Super Admin') {
         const j = String(profile.jabatan).toLowerCase();
-        updateData.role = (j.includes('sekretaris') || j.includes('kasubbag')) ? 'Admin' : 'User';
+        const un = String(profile.username).toLowerCase();
+        if(un === 'superadmin' || un === 'admin') updateData.role = 'Super Admin';
+        else updateData.role = (j.includes('sekretaris') || j.includes('kasubbag')) ? 'Admin' : 'User';
       }
 
       await supabase.from('users').update(updateData).eq('sheet_name', targetSheet);
