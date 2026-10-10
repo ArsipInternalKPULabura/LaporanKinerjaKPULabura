@@ -44,15 +44,12 @@
     #loginScreen { max-width: 400px; margin: 100px auto; background: var(--card); padding: 30px; border-radius: 20px; } #mainScreen { display: none; }
     #pdfFrame { width: 100%; flex: 1; border: none; border-radius: 10px; background: #fff; min-height: 60vh; margin-bottom:15px; }
 
-    /* Merapikan Form Edit Isi Kegiatan */
-    #modalForm .modal-content { padding: 25px; border-radius: 12px; }
-    #modalForm .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-    #modalForm .form-group label { font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #333; }
-    #modalForm .form-group input, #modalForm .form-group textarea { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
-    #modalForm .form-group textarea { resize: vertical; min-height: 80px; }
+    #modalForm .dialog { padding: 25px; border-radius: 12px; }
+    #modalForm .field { margin-bottom: 5px; display: flex; flex-direction: column; }
+    #modalForm .field label { font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #9e9e9e; }
+    #modalForm .field input, #modalForm .field textarea { padding: 10px; border: 1px solid #444; border-radius: 6px; font-size: 14px; }
+    #modalForm .field textarea { resize: vertical; min-height: 80px; }
     #waktuContainer { display: flex; gap: 10px; align-items: center; }
-    #waktuContainer input { flex: 1; }
-    #waktuContainer span { font-weight: bold; }
   </style>
 </head>
 <body>
@@ -142,7 +139,7 @@
     <div class="field"><label>Ganti Password</label><input type="text" id="sPassword" placeholder="Abaikan jika tidak diganti"></div>
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>DATA PEGAWAI</b></label></div>
     <div class="field"><label>Nama Lengkap</label><input id="sNama"></div><div class="field"><label>NIP Pegawai</label><input id="sNip"></div>
-    <div class="field"><label>Jabatan</label><input id="sJabatan"></div>
+    <div class="field"><label>Jabatan (Ubah ini jadi Kasubbag/Sekretaris untuk akses Admin)</label><input id="sJabatan"></div>
     <div class="field"><label>Unit Kerja</label>
       <select id="sUnit">
         <option value="">-- Pilih Unit Kerja --</option>
@@ -153,19 +150,14 @@
       </select>
     </div>
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px">
-      <label style="color:#fff"><b>INFO ATASAN</b></label>
+      <label style="color:#fff"><b>INFO ATASAN (Ditarik Otomatis dari Database)</b></label>
       <select id="sPilihAtasan" onchange="pilihAtasan()">
-        <option value="">-- Pilih Atasan --</option>
-        <option value="keuangan">Kasubbag Keuangan, Umum, dan Logistik</option>
-        <option value="teknis">Kasubbag Teknis dan Parmas</option>
-        <option value="rendatin">Kasubbag Rendatin</option>
-        <option value="hukum">Kasubbag Hukum dan SDM</option>
-        <option value="sekretaris">Sekretaris</option>
+        <option value="">-- Sedang memuat atasan... --</option>
       </select>
     </div>
     <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle"></div>
     <div class="field"><label>Nama Atasan</label><input id="sAtasanName"></div><div class="field"><label>NIP Atasan</label><input id="sAtasanNip"></div>
-    <div class="field"><label style="color:var(--primary)">TTD Atasan (Kiri)</label><input type="file" id="sTtdAtasanFile" accept="image/png, image/jpeg" style="padding:8px"></div>
+    <div class="field"><label style="color:var(--primary)">TTD Atasan (Kiri) <small id="infoTtdAtasan"></small></label><input type="file" id="sTtdAtasanFile" accept="image/png, image/jpeg" style="padding:8px"></div>
     <div class="field"><label style="color:var(--success)">TTD Anda (Kanan)</label><input type="file" id="sTtdFile" accept="image/png, image/jpeg" style="padding:8px"></div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalSettings')">Batal</button><button class="primary" onclick="saveSettings()">💾 SIMPAN PENGATURAN</button></div>
@@ -187,26 +179,15 @@
 <script>
 let cred={loginId:'', password:'', sheetName:''}, profile={}, rows=[], ttdB64=null, ttdAtasanB64=null;
 let base64PdfUtama = null, targetSheetView = null; 
+let listAtasanDB = []; // Variabel untuk menyimpan data atasan dari database
 
-const DATA_ATASAN = {
-  'keuangan': { title: 'Kasubbag Keuangan, Umum, dan Logistik', name: 'Muhammad Ridwan', nip: '196905211994111001' },
-  'teknis': { title: 'Kasubbag Teknis dan Parmas', name: 'Chairi Asman', nip: '198309162009021007' },
-  'rendatin': { title: 'Kasubbag Rendatin', name: 'Fachrur Razi Juned', nip: '198206072009021006' },
-  'hukum': { title: 'Kasubbag Hukum dan SDM', name: 'Muhammad Rajali Siregar', nip: '198703072020121003' },
-  'sekretaris': { title: 'Sekretaris', name: 'Muhammad Azmir Daulay', nip: '198003152009121003' }
-};
-
-// Fungsi Format Tanggal Cerdas
 function formatTanggalLengkap(tglStr) {
   if (!tglStr) return '';
   if (tglStr.includes(',')) return tglStr; 
-  
   const d = new Date(tglStr);
   if (isNaN(d)) return tglStr; 
-  
   const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  
   return `${namaHari[d.getDay()]}, ${d.getDate()} ${namaBulan[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -246,11 +227,9 @@ function loadData() {
     document.getElementById('pNama').textContent = profile.nama || profile.username; 
     document.getElementById('pJabatan').textContent = profile.jabatan || '-'; 
     
-    // Perbaikan UI Unit Kerja
     let unitFix = profile.unitKerja || '-';
     if(unitFix.includes("Subbagian Keuangan Umum")) unitFix = unitFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
     document.getElementById('pUnit').textContent = unitFix;
-    
     document.getElementById('pBulan').textContent = profile.bulanLaporan || '-';
     
     if(!targetSheetView) { cekAdminBawahan(); document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri"; } 
@@ -275,7 +254,6 @@ function cekAdminBawahan() {
 function lihatLhkBawahan() { const sel = document.getElementById('bawahanSelect').value; if (!sel) return alert("Pilih bawahan!"); targetSheetView = sel; loadData(); }
 function kembaliKeLhkSendiri() { targetSheetView = null; loadData(); }
 
-// MERGE ROWSPAN UI HTML
 function renderRowsUI() {
   const tb = document.getElementById('tbody');
   if(!rows.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px">Belum ada kegiatan.</td></tr>'; return; }
@@ -324,7 +302,7 @@ function formatTanggalIndo() {
   document.getElementById('tanggalStr').value = `${d.getDate()} ${names[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function openSettings() {
+async function openSettings() {
   document.getElementById('sUsername').value = profile.username || '';
   document.getElementById('sBulan').value = profile.bulanLaporan || 'Oktober 2026';
   document.getElementById('sNama').value = profile.nama || ''; 
@@ -340,13 +318,42 @@ function openSettings() {
   document.getElementById('sAtasanNip').value = profile.atasanNip || ''; 
   ttdB64 = profile.ttdBase64 || null;
   ttdAtasanB64 = profile.ttdAtasanBase64 || null;
+
+  // Menarik Data Atasan Secara Dinamis dari Database
+  try {
+    const res = await callApi('getAtasanList');
+    listAtasanDB = res.data || [];
+    let optHtml = '<option value="">-- Pilih Atasan --</option>';
+    listAtasanDB.forEach((a, i) => {
+      optHtml += `<option value="${i}">${a.jabatan} (${a.nama || a.username})</option>`;
+    });
+    document.getElementById('sPilihAtasan').innerHTML = optHtml;
+  } catch(e) { console.error("Gagal menarik daftar atasan:", e); }
+
   document.getElementById('modalSettings').classList.add('show');
 }
 
-function pilihAtasan() { const val = document.getElementById('sPilihAtasan').value; if(val && DATA_ATASAN[val]) { document.getElementById('sAtasanTitle').value = DATA_ATASAN[val].title; document.getElementById('sAtasanName').value = DATA_ATASAN[val].name; document.getElementById('sAtasanNip').value = DATA_ATASAN[val].nip; } }
+function pilihAtasan() { 
+  const idx = document.getElementById('sPilihAtasan').value; 
+  if(idx !== '' && listAtasanDB[idx]) { 
+    const a = listAtasanDB[idx];
+    document.getElementById('sAtasanTitle').value = a.jabatan || ''; 
+    document.getElementById('sAtasanName').value = a.nama || a.username || ''; 
+    document.getElementById('sAtasanNip').value = a.nip || ''; 
+    
+    // Otomatis menarik TTD atasan jika atasan sudah pernah mengaturnya
+    if(a.ttd_base64) {
+      ttdAtasanB64 = a.ttd_base64;
+      document.getElementById('infoTtdAtasan').textContent = "(✅ Otomatis ditarik dari profil atasan)";
+    } else {
+      ttdAtasanB64 = null;
+      document.getElementById('infoTtdAtasan').textContent = "(⚠️ Atasan belum upload TTD)";
+    }
+  } 
+}
 
 document.getElementById('sTtdFile').addEventListener('change', e => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ev => ttdB64 = ev.target.result; r.readAsDataURL(f); });
-document.getElementById('sTtdAtasanFile').addEventListener('change', e => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ev => ttdAtasanB64 = ev.target.result; r.readAsDataURL(f); });
+document.getElementById('sTtdAtasanFile').addEventListener('change', e => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ev => ttdAtasanB64 = ev.target.result; r.readAsDataURL(f); document.getElementById('infoTtdAtasan').textContent = "(✅ TTD Manual Berhasil Dimuat)"; });
 
 function saveSettings() {
   setMsg("Menyimpan profil...", "white"); closeModal('modalSettings');
@@ -390,13 +397,10 @@ function openEdit(index) {
   document.getElementById('nomor').value = r.nomor; 
   document.getElementById('tanggalStr').value = r.tanggal; 
   
-  if(!r.nomor) { 
-    document.getElementById('tanggalRaw').style.display = 'none'; 
-  } else { 
-    document.getElementById('tanggalRaw').style.display = 'block'; 
-  }
+  if(!r.nomor) { document.getElementById('tanggalRaw').style.display = 'none'; } 
+  else { document.getElementById('tanggalRaw').style.display = 'block'; }
+  
   document.getElementById('waktuContainer').style.display = 'flex'; 
-
   document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value='';
   if(r.pukul) {
      const splitJam = r.pukul.replace(' WIB','').split('-');
@@ -416,16 +420,11 @@ function addLanjutan(index) {
   document.getElementById('insertAfter').value = index; 
   document.getElementById('nomor').value=''; 
   document.getElementById('tanggalStr').value=''; 
-  
   document.getElementById('tanggalRaw').style.display = 'none'; 
   document.getElementById('waktuContainer').style.display = 'flex'; 
-  
   document.getElementById('uraian').value=''; 
-  document.getElementById('pukulAwal').value=''; 
-  document.getElementById('pukulAkhir').value=''; 
-  document.getElementById('jumlah').value=''; 
-  document.getElementById('link').value=''; 
-  document.getElementById('keterangan').value=''; 
+  document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; 
+  document.getElementById('jumlah').value=''; document.getElementById('link').value=''; document.getElementById('keterangan').value=''; 
   document.getElementById('modalForm').classList.add('show'); 
 }
   
@@ -459,17 +458,12 @@ function previewPdf() {
     doc.text("APARATUR SIPIL NEGARA (ASN)", 105, 20, { align: "center" });
     doc.text("KPU PROVINSI SUMATERA UTARA", 105, 25, { align: "center" });
 
-    // 2. BIODATA PENGGUNA
+    // 2. BIODATA
     let unitKerjaFix = profile.unitKerja || '-';
-    if(unitKerjaFix.includes("Subbagian Keuangan Umum")) {
-        unitKerjaFix = unitKerjaFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
-    }
+    if(unitKerjaFix.includes("Subbagian Keuangan Umum")) unitKerjaFix = unitKerjaFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
 
     doc.autoTable({
-      startY: 32,
-      theme: 'plain',
-      styles: { fontSize: 10, cellPadding: 1, textColor: 0, font: "helvetica" },
-      margin: { left: 2, right: 2 }, 
+      startY: 32, theme: 'plain', styles: { fontSize: 10, cellPadding: 1, textColor: 0, font: "helvetica" }, margin: { left: 2, right: 2 }, 
       columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 5, halign: 'center' }, 2: { cellWidth: 176 } },
       body: [
         ['NAMA', ':', profile.nama || profile.username || '-'],
@@ -481,62 +475,39 @@ function previewPdf() {
     });
 
     let finalY = doc.lastAutoTable.finalY;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10); doc.setFont("helvetica", "normal");
     doc.text("JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT", 2, finalY + 5);
 
-    // 3. SUSUN STRUKTUR TABEL 
+    // 3. STRUKTUR TABEL 
     let tableBody = [];
     for (let i = 0; i < rows.length; i++) {
-      let r = rows[i];
-      let isLanjutan = !r.nomor && !r.tanggal;
-      let rowData = [];
+      let r = rows[i]; let isLanjutan = !r.nomor && !r.tanggal; let rowData = [];
 
       if (!isLanjutan) {
         let rowspan = 1;
-        for (let j = i + 1; j < rows.length; j++) {
-          if (!rows[j].nomor && !rows[j].tanggal) rowspan++;
-          else break;
-        }
+        for (let j = i + 1; j < rows.length; j++) { if (!rows[j].nomor && !rows[j].tanggal) rowspan++; else break; }
         rowData.push({ content: r.nomor || '', rowSpan: rowspan });
         rowData.push({ content: formatTanggalLengkap(r.tanggal), rowSpan: rowspan });
       }
       
-      rowData.push((r.pukul || '').trim());
-      rowData.push(r.uraian || '');
-      rowData.push(r.jumlah || '');
-      rowData.push(r.link || '');
-      rowData.push(r.keterangan || '');
-
+      rowData.push((r.pukul || '').trim()); rowData.push(r.uraian || ''); rowData.push(r.jumlah || ''); rowData.push(r.link || ''); rowData.push(r.keterangan || '');
       tableBody.push(rowData);
     }
 
     // 4. TABEL UTAMA
     doc.autoTable({
-      startY: finalY + 8,
-      theme: 'grid',
-      // PERBAIKAN: cellPadding.top = 4 agar huruf P di PUKUL punya ruang napas
+      startY: finalY + 8, theme: 'grid',
       headStyles: { fillColor: [255, 255, 255], textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle', cellPadding: { top: 4, bottom: 2, left: 2, right: 2 } },
       bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
       styles: { font: "helvetica", fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
       head: [['NO', 'HARI/TANGGAL', 'PUKUL', 'URAIAN\nKEGIATAN', 'JUMLAH\nREALISASI\nBUKTI DUKUNG', 'LINK\nBUKTI DUKUNG', 'KETERANGAN']],
       body: tableBody,
-      columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 32 }, 
-        2: { cellWidth: 20 }, 
-        3: { cellWidth: 50, halign: 'center' }, 
-        4: { cellWidth: 28 }, 
-        5: { cellWidth: 38 }, 
-        6: { cellWidth: 28 }  
-      },
-      margin: { left: 2, right: 2 }, 
-      rowPageBreak: 'avoid' 
+      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 32 }, 2: { cellWidth: 20 }, 3: { cellWidth: 50, halign: 'center' }, 4: { cellWidth: 28 }, 5: { cellWidth: 38 }, 6: { cellWidth: 28 } },
+      margin: { left: 2, right: 2 }, rowPageBreak: 'avoid' 
     });
 
-    // 5. TANDA TANGAN (AUTO TABLE TRANSPARAN AGAR SEJAJAR)
+    // 5. TANDA TANGAN 
     finalY = doc.lastAutoTable.finalY;
-
     if (finalY > 220) { doc.addPage(); finalY = 20; }
 
     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -546,69 +517,32 @@ function previewPdf() {
     const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]);
     const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
     const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
-
     const isSekretaris = profile.jabatan.toLowerCase().includes('sekretaris');
     
     doc.autoTable({
-      startY: finalY + 10,
-      theme: 'plain',
-      styles: { halign: 'center', cellPadding: 1, fontSize: 10, font: "helvetica", textColor: 0 },
-      margin: { left: 10, right: 10 },
-      columnStyles: {
-        0: { cellWidth: 85 }, // Kolom Kiri
-        1: { cellWidth: 20 }, // Jarak Tengah
-        2: { cellWidth: 85 }  // Kolom Kanan
-      },
+      startY: finalY + 10, theme: 'plain', styles: { halign: 'center', cellPadding: 1, fontSize: 10, font: "helvetica", textColor: 0 }, margin: { left: 10, right: 10 },
+      columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 20 }, 2: { cellWidth: 85 } },
       body: [
-        [
-          (profile.atasanTitle && !isSekretaris) ? "Diketahui/Disetujui" : "", 
-          "", 
-          dateLabel
-        ],
-        [
-          (profile.atasanTitle && !isSekretaris) ? profile.atasanTitle : "", 
-          "", 
-          profile.jabatan
-        ],
-        [
-          "\n\n\n", // Ruang TTD Gambar
-          "", 
-          "\n\n\n"
-        ],
-        [
-          (profile.atasanTitle && !isSekretaris) ? profile.atasanName : "", 
-          "", 
-          profile.nama || profile.username
-        ],
-        [
-          (profile.atasanTitle && !isSekretaris) ? "NIP. " + profile.atasanNip : "", 
-          "", 
-          "NIP. " + (profile.nip || '-')
-        ]
+        [ (profile.atasanTitle && !isSekretaris) ? "Diketahui/Disetujui" : "", "", dateLabel ],
+        [ (profile.atasanTitle && !isSekretaris) ? profile.atasanTitle : "", "", profile.jabatan ],
+        [ "\n\n\n", "", "\n\n\n" ],
+        [ (profile.atasanTitle && !isSekretaris) ? profile.atasanName : "", "", profile.nama || profile.username ],
+        [ (profile.atasanTitle && !isSekretaris) ? "NIP. " + profile.atasanNip : "", "", "NIP. " + (profile.nip || '-') ]
       ],
       didDrawCell: function(data) {
-        // Render Gambar TTD secara persis di sel yang kosong (\n\n\n)
         if (data.row.index === 2) { 
-          if (data.column.index === 0 && profile.ttdAtasanBase64 && !isSekretaris) {
-             try { doc.addImage(profile.ttdAtasanBase64, 'JPEG', data.cell.x + 22, data.cell.y + 2, 40, 20); } catch(e){}
-          }
-          if (data.column.index === 2 && profile.ttdBase64) {
-             try { doc.addImage(profile.ttdBase64, 'JPEG', data.cell.x + 22, data.cell.y + 2, 40, 20); } catch(e){}
-          }
+          if (data.column.index === 0 && profile.ttdAtasanBase64 && !isSekretaris) { try { doc.addImage(profile.ttdAtasanBase64, 'JPEG', data.cell.x + 22, data.cell.y + 2, 40, 20); } catch(e){} }
+          if (data.column.index === 2 && profile.ttdBase64) { try { doc.addImage(profile.ttdBase64, 'JPEG', data.cell.x + 22, data.cell.y + 2, 40, 20); } catch(e){} }
         }
       }
     });
 
-    // 6. RENDER HASIL PDF
     base64PdfUtama = doc.output('datauristring');
     document.getElementById('pdfFrame').src = base64PdfUtama;
     document.getElementById('modalPdf').classList.add('show');
     setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
 
-  } catch (error) {
-    setMsg("Gagal merender PDF.", "red");
-    console.error(error);
-  }
+  } catch (error) { setMsg("Gagal merender PDF.", "red"); console.error(error); }
 }
 
 function eksekusiUnduhPdf() {
