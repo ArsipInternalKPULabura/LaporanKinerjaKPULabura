@@ -6,7 +6,6 @@
   <title>Aplikasi LHK KPU</title>
   <meta name="theme-color" content="#121212">
   <link rel="manifest" href="manifest.json">
-  <!-- ICON KPU -->
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -19,14 +18,12 @@
     body { margin: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--text); }
     .wrap { max-width: 1200px; margin: auto; padding: 16px; }
     
-    /* LOGIN UI */
     #loginScreen { max-width: 450px; margin: 60px auto; background: var(--card); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .login-header { text-align: center; margin-bottom: 25px; }
     .login-header img { width: 90px; margin-bottom: 12px; }
     .login-header h2 { margin: 0; font-size: 16px; line-height: 1.4; color: #fff; }
     .login-notes { margin-top: 20px; font-size: 12px; color: #aaa; background: #2a2a2a; padding: 15px; border-radius: 8px; line-height: 1.6; }
     
-    /* HERO UI */
     .top-actions { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 12px; }
     .top-actions button { padding: 6px 12px; font-size: 11px; border-radius: 6px; }
     .hero { background: linear-gradient(135deg, #1f2937, #111827); border-radius: 20px; padding: 25px; border: 1px solid var(--border); text-align: center; }
@@ -45,7 +42,6 @@
     input:focus, textarea:focus, select:focus { border-color: var(--primary); }
     .status { font-size: 13px; color: var(--success); margin-top: 10px; font-weight: bold; }
     
-    /* TABEL FREEZE KOLOM NO (Mobile) */
     .table-container { overflow-x: auto; max-width: 100vw; border-radius: 10px; margin-top: 10px; border: 1px solid #555; background: var(--table-bg); position: relative; }
     table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 900px; } 
     th, td { border-bottom: 1px solid #555; border-right: 1px solid #555; padding: 12px 10px; text-align: center; vertical-align: middle; } 
@@ -130,7 +126,10 @@
           <button class="primary" onclick="generateBulan()">📅 Generate Bulan</button> 
           <button class="secondary" onclick="openAdd()">➕ Baris Baru</button>
           
-          <!-- FILTER HALAMAN (Pagination Mobile/Desktop) -->
+          <!-- TOMBOL BULK COPY HANYA MUNCUL SAAT MELIHAT LHK BAWAHAN -->
+          <button id="btnBulkCopy" class="success" style="display:none;" onclick="bulkCopySelected()">📥 Copy Terpilih ke LHK Saya</button>
+          
+          <!-- FILTER HALAMAN (Diperbanyak) -->
           <select id="selBaris" onchange="currentPage=1; renderRowsUI()" style="width:auto; padding:10px; border-radius:8px; margin-left:10px;">
               <option value="0">Tampilkan Semua Data</option>
               <option value="5">5 Kegiatan / Halaman</option>
@@ -139,6 +138,12 @@
               <option value="8">8 Kegiatan / Halaman</option>
               <option value="9">9 Kegiatan / Halaman</option>
               <option value="10">10 Kegiatan / Halaman</option>
+              <option value="15">15 Kegiatan / Halaman</option>
+              <option value="20">20 Kegiatan / Halaman</option>
+              <option value="25">25 Kegiatan / Halaman</option>
+              <option value="30">30 Kegiatan / Halaman</option>
+              <option value="40">40 Kegiatan / Halaman</option>
+              <option value="50">50 Kegiatan / Halaman</option>
           </select>
       </div>
       <div><button class="success" onclick="previewPdf()">👁️ Preview & Unduh PDF</button></div>
@@ -156,7 +161,7 @@
             <th width="120">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
             <th width="80">LINK BUKTI DUKUNG</th>
             <th width="100">KETERANGAN</th>
-            <th width="120">AKSI</th>
+            <th width="140">AKSI</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -198,7 +203,10 @@
     <div class="field"><label>Ganti Password</label><input type="text" id="sPassword" placeholder="Abaikan jika tidak diganti"></div>
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>DATA PEGAWAI</b></label></div>
     <div class="field"><label>Nama Lengkap</label><input id="sNama"></div><div class="field"><label>NIP Pegawai</label><input id="sNip"></div>
-    <div class="field"><label>Jabatan (Otomatis Sistem)</label><input id="sJabatan" readonly style="background:#2a2a2a; color:#888;"></div>
+    
+    <!-- JABATAN DIBUKA KUNCINYA AGAR BISA DIEDIT -->
+    <div class="field"><label>Jabatan (Isi Kasubbag/Sekretaris untuk akses pimpinan)</label><input id="sJabatan"></div>
+    
     <div class="field"><label>Unit Kerja</label>
       <select id="sUnit">
         <option value="">-- Pilih Unit Kerja --</option>
@@ -214,7 +222,7 @@
       <select id="sPilihAtasan" onchange="pilihAtasan()"><option value="">-- Sedang memuat atasan... --</option></select>
     </div>
     <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle" readonly style="background:#2a2a2a; color:#888;"></div>
-    <!-- READONLY UNTUK NAMA DAN NIP ATASAN -->
+    <!-- NAMA DAN NIP ATASAN DIKUNCI READONLY -->
     <div class="field"><label>Nama Atasan</label><input id="sAtasanName" readonly style="background:#2a2a2a; color:#888;"></div>
     <div class="field"><label>NIP Atasan</label><input id="sAtasanNip" readonly style="background:#2a2a2a; color:#888;"></div>
     
@@ -226,7 +234,6 @@
       <label style="color:var(--success); font-size:14px; margin-bottom:10px;"><b>🔔 PENGINGAT LHK (NOTIFIKASI)</b></label>
       <div style="background:#2a2a2a; padding:15px; border-radius:8px;">
         <label style="display:block; margin-bottom:10px; color:#aaa; font-size:12px;">Pilih Hari Pengingat:</label>
-        <!-- CSS GRID untuk Hari -->
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap:8px; margin-bottom:15px;">
           <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="1" class="cb-hari"> Sen</label>
           <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="2" class="cb-hari"> Sel</label>
@@ -241,6 +248,9 @@
           <input type="time" id="jamNotif" style="flex:1; min-width:130px; padding:12px;">
           <button class="primary" onclick="aktifkanNotif()" style="flex:1; min-width:150px; padding:12px; font-size:13px;">Aktifkan Akses Browser</button>
         </div>
+        <!-- TOMBOL TEST NOTIFIKASI -->
+        <button class="secondary" onclick="testNotif()" style="width:100%; margin-top:10px; padding:10px; font-size:12px;">🔔 Test Notifikasi Sekarang</button>
+        <small style="display:block; margin-top:8px; color:#888;">*Catatan: Tab web ini harus dalam keadaan terbuka (boleh di-minimize) agar alarm notifikasi bisa berbunyi tepat waktu.</small>
       </div>
     </div>
 
@@ -300,7 +310,7 @@ let cred={loginId:'', password:'', sheetName:''}, profile={}, rows=[], ttdB64=nu
 let base64PdfUtama = null, targetSheetView = null; 
 let listAtasanDB = [], listBawahanSheets = []; 
 let notifInterval;
-let currentPage = 1; // Variabel Pagination Halaman
+let currentPage = 1; 
 
 function formatTanggalLengkap(tglStr) {
   if (!tglStr) return '';
@@ -364,16 +374,18 @@ function loadData() {
     document.getElementById('pUnit').textContent = unitFix;
     document.getElementById('pBulan').textContent = profile.bulanLaporan || '-';
     
-    updateUIGdriveHero(); // Perbarui tampilan status GDrive Hero
+    updateUIGdriveHero(); 
     
     if(!targetSheetView) { cekAdminBawahan(); document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri"; } 
     else { document.getElementById('pModeTampilan').textContent = `Melihat LHK: ${profile.username}`; }
+    
+    // Tampilkan/Sembunyikan tombol Bulk Copy jika Atasan sedang memantau
+    document.getElementById('btnBulkCopy').style.display = (targetSheetView !== null) ? 'inline-block' : 'none';
     
     renderRowsUI(); setMsg("Data termuat.");
   }).catch(e => setMsg("Error: "+e, "red"));
 }
 
-// LOGIKA UI CUSTOM STATUS GDRIVE HERO
 function updateUIGdriveHero() {
     const el = document.getElementById('pStatusUpload');
     if (profile.status_upload) {
@@ -435,10 +447,11 @@ async function cekStatusUpload() {
 
 function goToPage(p) { currentPage = p; renderRowsUI(); }
 
-// LOGIKA PAGINATION PINTAR (GROUPING KEGIATAN)
+// LOGIKA PAGINATION PINTAR & TOMBOL COPY UNTUK ATASAN
 function renderRowsUI() {
   const tb = document.getElementById('tbody');
   const pgCtrl = document.getElementById('paginationCtrl');
+  const isViewingBawahan = (targetSheetView !== null);
   
   if(!rows.length) { 
       tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px">Belum ada kegiatan.</td></tr>'; 
@@ -446,7 +459,6 @@ function renderRowsUI() {
       return; 
   }
   
-  // Mengelompokkan anak ke induk (agar Rowspan tidak rusak saat dipisah halaman)
   let groups = []; let currentGroup = null;
   for(let i=0; i<rows.length; i++) {
       let r = rows[i];
@@ -468,41 +480,139 @@ function renderRowsUI() {
   let html = '';
   displayGroups.forEach(g => {
       let rowspan = 1 + g.children.length;
+      
+      // Aksi Khusus Parent
+      let parentAksi = '';
+      if(isViewingBawahan) {
+          parentAksi = `<div class="action-group" style="flex-direction:column; gap:5px;">
+              <button class="success" onclick="copyToMyLhk([${g.index}])" title="Copy ke LHK Saya">📥 Copy</button>
+              <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="cb-copy-row" value="${g.index}"> Pilih</label>
+          </div>`;
+      } else {
+          parentAksi = `<div class="action-group"><button class="secondary" onclick="openEdit(${g.index})">✏️</button><button class="primary" onclick="addLanjutan(${g.index})">➕</button><button class="danger" onclick="hapusRow(${g.index})">🗑️</button></div>`;
+      }
+
       html += `<tr>
         <td rowspan="${rowspan}">${g.parent.nomor||''}</td>
-        <td rowspan="${rowspan}" style="font-weight:bold;">${formatTanggalLengkap(g.parent.tanggal)}</td>
+        <td rowspan="${rowspan}" style="font-weight:bold; text-align:left;">${formatTanggalLengkap(g.parent.tanggal)}</td>
         <td>${g.parent.pukul||''}</td>
         <td style="text-align:left;">${(g.parent.uraian||'').replace(/\n/g,'<br>')}</td>
         <td>${g.parent.jumlah||''}</td>
         <td>${g.parent.link?'<a href="'+g.parent.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
         <td>${g.parent.keterangan||''}</td>
-        <td><div class="action-group"><button class="secondary" onclick="openEdit(${g.index})">✏️</button><button class="primary" onclick="addLanjutan(${g.index})">➕</button><button class="danger" onclick="hapusRow(${g.index})">🗑️</button></div></td>
+        <td>${parentAksi}</td>
       </tr>`;
       
       g.children.forEach(c => {
+         // Aksi Khusus Child
+         let childAksi = '';
+         if(isViewingBawahan) {
+             childAksi = `<div class="action-group" style="flex-direction:column; gap:5px;">
+                 <button class="success" onclick="copyToMyLhk([${c.index}])" title="Copy ke LHK Saya">📥 Copy</button>
+                 <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="cb-copy-row" value="${c.index}"> Pilih</label>
+             </div>`;
+         } else {
+             childAksi = `<div class="action-group"><button class="secondary" onclick="openEdit(${c.index})">✏️</button><button class="primary" onclick="addLanjutan(${c.index})">➕</button><button class="danger" onclick="hapusRow(${c.index})">🗑️</button></div>`;
+         }
+          
          html += `<tr>
             <td>${c.pukul||''}</td>
             <td style="text-align:left;">${(c.uraian||'').replace(/\n/g,'<br>')}</td>
             <td>${c.jumlah||''}</td>
             <td>${c.link?'<a href="'+c.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
             <td>${c.keterangan||''}</td>
-            <td><div class="action-group"><button class="secondary" onclick="openEdit(${c.index})">✏️</button><button class="primary" onclick="addLanjutan(${c.index})">➕</button><button class="danger" onclick="hapusRow(${c.index})">🗑️</button></div></td>
+            <td>${childAksi}</td>
          </tr>`;
       });
   });
   tb.innerHTML = html;
 
-  // Render Tombol Pagination
   if(totalPages > 1) {
       let pgHtml = '';
       for(let p=1; p<=totalPages; p++) {
           pgHtml += `<button class="${p === currentPage ? 'primary' : 'secondary'}" onclick="goToPage(${p})" style="padding:8px 14px; margin:0 3px; border-radius:8px; font-size:13px; font-weight:bold;">${p}</button>`;
       }
       pgCtrl.innerHTML = pgHtml;
-  } else {
-      pgCtrl.innerHTML = '';
-  }
+  } else { pgCtrl.innerHTML = ''; }
 }
+
+// LOGIKA EKSPOR (COPY) DATA LHK BAWAHAN KE LHK ATASAN
+function bulkCopySelected() {
+    let selected = Array.from(document.querySelectorAll('.cb-copy-row:checked')).map(cb => parseInt(cb.value));
+    if(selected.length === 0) return alert("Centang minimal satu baris yang ingin di-copy.");
+    copyToMyLhk(selected);
+}
+
+async function copyToMyLhk(indices) {
+    if(!indices || indices.length === 0) return;
+    
+    let targetNo = prompt(`Menyalin ${indices.length} baris kegiatan ke tabel LHK Anda.\n\nMasukkan Nomor Urut Tujuan (misal: 1):\n(Biarkan KOSONG jika ingin menyimpan ke baris paling bawah)`);
+    if (targetNo === null) return; 
+
+    setMsg("Menyalin ke LHK Anda...", "var(--warning)");
+    try {
+        // Ambil Data LHK Atasan dari Database
+        const res = await fetch('/api', {
+           method: 'POST', headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ action: 'initial', loginId: cred.loginId, password: cred.password, aktorLogin: cred.sheetName, targetSheet: cred.sheetName })
+        });
+        const data = await res.json();
+        let myRows = data.rows || [];
+
+        // Siapkan baris yang mau diinsert
+        let itemsToInsert = [];
+        for(let idx of indices) {
+            let r = rows[idx];
+            let copyTanggal = r.tanggal;
+            // Cari tanggal induk jika ini anak baris (lanjutan)
+            if(!copyTanggal) {
+                for(let i=idx; i>=0; i--) {
+                    if(rows[i].tanggal) { copyTanggal = rows[i].tanggal; break; }
+                }
+            }
+            itemsToInsert.push({
+                nomor: '', 
+                tanggal: copyTanggal,
+                pukul: r.pukul,
+                uraian: r.uraian,
+                jumlah: r.jumlah,
+                link: r.link,
+                keterangan: r.keterangan
+            });
+        }
+
+        // Tentukan Posisi Nomor
+        if(targetNo) {
+            itemsToInsert[0].nomor = targetNo; // Beri nomor pada baris pertama saja
+            let insertPos = myRows.findIndex(r => String(r.nomor) === String(targetNo));
+            if(insertPos !== -1) {
+                // Taruh di bawah anak-anaknya dari nomor tersebut
+                insertPos++;
+                while(insertPos < myRows.length && !myRows[insertPos].nomor && !myRows[insertPos].tanggal) { insertPos++; }
+                myRows.splice(insertPos, 0, ...itemsToInsert);
+            } else { myRows.push(...itemsToInsert); }
+        } else {
+            // Taruh di paling bawah otomatis
+            let maxNum = myRows.length > 0 ? Math.max(...myRows.filter(r=>r.nomor).map(r=>Number(r.nomor)||0)) : 0;
+            itemsToInsert[0].nomor = maxNum + 1;
+            myRows.push(...itemsToInsert);
+        }
+
+        // Simpan langsung ke database Atasan
+        await fetch('/api', {
+           method: 'POST', headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ action: 'syncRows', loginId: cred.loginId, password: cred.password, aktorLogin: cred.sheetName, targetSheet: cred.sheetName, rows: myRows })
+        });
+        
+        alert(`Berhasil! ${indices.length} kegiatan telah di-copy ke LHK Anda.`);
+        setMsg("Data berhasil disalin.", "var(--success)");
+        document.querySelectorAll('.cb-copy-row').forEach(cb => cb.checked = false); // Hapus centang
+    } catch(e) {
+        alert("Gagal mengcopy: " + e);
+        setMsg("Gagal copy.", "var(--danger)");
+    }
+}
+
 
 function formatTanggalIndo() {
   const dRaw = document.getElementById('tanggalRaw').value; if(!dRaw) return;
@@ -565,7 +675,7 @@ document.getElementById('sTtdAtasanFile').addEventListener('change', e => { cons
 
 function saveSettings() {
   setMsg("Menyimpan profil...", "white"); closeModal('modalSettings');
-  const p = { username: document.getElementById('sUsername').value, password: document.getElementById('sPassword').value, bulanLaporan: document.getElementById('sBulan').value, nama: document.getElementById('sNama').value, nip: document.getElementById('sNip').value, unitKerja: document.getElementById('sUnit').value, atasanTitle: document.getElementById('sAtasanTitle').value, atasanName: document.getElementById('sAtasanName').value, atasanNip: document.getElementById('sAtasanNip').value };
+  const p = { username: document.getElementById('sUsername').value, password: document.getElementById('sPassword').value, bulanLaporan: document.getElementById('sBulan').value, nama: document.getElementById('sNama').value, nip: document.getElementById('sNip').value, jabatan: document.getElementById('sJabatan').value, unitKerja: document.getElementById('sUnit').value, atasanTitle: document.getElementById('sAtasanTitle').value, atasanName: document.getElementById('sAtasanName').value, atasanNip: document.getElementById('sAtasanNip').value };
   
   if(p.username) cred.loginId = p.username; if(p.password) cred.password = p.password;
   
@@ -579,13 +689,19 @@ function saveSettings() {
   callApi('saveProfile', { profile: p, ttdBase64: ttdB64, ttdAtasanBase64: ttdAtasanB64 }).then(loadData).catch(e => alert(e));
 }
 
-// FITUR NOTIFIKASI
+// FITUR NOTIFIKASI DINAMIS
 function aktifkanNotif() {
   if (!("Notification" in window)) { alert("Browser ini tidak mendukung notifikasi."); return; }
   Notification.requestPermission().then(permission => {
     if (permission === "granted") alert("Izin diberikan! Pastikan Anda mencentang Hari dan mengatur Jam, lalu klik Simpan.");
     else alert("Izin notifikasi ditolak.");
   });
+}
+function testNotif() {
+  if (!("Notification" in window) || Notification.permission !== "granted") {
+      alert("Browser menolak notifikasi. Pastikan Anda telah mengklik 'Aktifkan Akses Browser' dan memberikan Izin (Allow) di pengaturan browser Anda."); return;
+  }
+  new Notification("LHK KPU - Test Berhasil!", { body: "Notifikasi Anda berjalan dengan baik di perangkat ini.", icon: "https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg" });
 }
 function cekNotifikasi() {
   if(notifInterval) clearInterval(notifInterval);
@@ -724,7 +840,7 @@ function eksekusiUnduhPdf() {
 function eksekusiSimpanKeDrive() {
   window.open("https://drive.google.com/drive/folders/1zilbvS0QQEE0iqxlQ1__taC91MKpMhCi?usp=drive_link", "_blank");
   closeModal('modalPdf'); setMsg("Tautan Google Drive dibuka...", "var(--warning)");
-  setTimeout(() => { bukaModalKonfirmasiGdrive(); }, 1500); // Tampilkan pop up konfirmasi setelah 1.5 detik
+  setTimeout(() => { bukaModalKonfirmasiGdrive(); }, 1500); 
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
