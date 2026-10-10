@@ -42,17 +42,16 @@
     input:focus, textarea:focus, select:focus { border-color: var(--primary); }
     .status { font-size: 13px; color: var(--success); margin-top: 10px; font-weight: bold; }
     
-    /* TABEL FREEZE KOLOM (Mobile Friendly) */
+    /* TABEL FREEZE KOLOM (Hanya Untuk lhkTable) */
     .table-container { overflow-x: auto; max-width: 100vw; border-radius: 10px; margin-top: 10px; border: 1px solid #555; background: var(--table-bg); position: relative; }
     table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 900px; } 
     th, td { border-bottom: 1px solid #555; border-right: 1px solid #555; padding: 12px 10px; text-align: center; vertical-align: middle; } 
     th { background: #1a1a1a; color: #fff; font-weight: bold; border-top: 1px solid #555; }
     
-    /* Membekukan Kolom NO dan HARI/TANGGAL */
-    th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 2; background: #1a1a1a; width: 45px; border-left: 1px solid #555;}
-    td:nth-child(1) { background: #1e1e1e; }
-    th:nth-child(2), td:nth-child(2) { position: sticky; left: 45px; z-index: 2; background: #1a1a1a; min-width: 160px; }
-    td:nth-child(2) { background: #1e1e1e; }
+    #lhkTable th:nth-child(1), #lhkTable td:nth-child(1) { position: sticky; left: 0; z-index: 2; background: #1a1a1a; width: 45px; border-left: 1px solid #555;}
+    #lhkTable td:nth-child(1) { background: #1e1e1e; }
+    #lhkTable th:nth-child(2), #lhkTable td:nth-child(2) { position: sticky; left: 45px; z-index: 2; background: #1a1a1a; min-width: 160px; }
+    #lhkTable td:nth-child(2) { background: #1e1e1e; }
     
     .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .action-group button { padding: 8px; font-size: 11px; flex: 1; }
     
@@ -98,7 +97,7 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
       <select id="bawahanSelect" style="flex:1; min-width:200px; padding:10px;"><option value="">-- Daftar Bawahan --</option></select>
       <button class="primary" onclick="lihatLhkBawahan()">👁️ Lihat LHK</button>
-      <button class="success" onclick="cekStatusUpload()">📊 Status Upload LHK</button>
+      <button class="success" onclick="cekStatusUpload()">📊 Status Upload GDrive</button>
       <button class="secondary" onclick="kembaliKeLhkSendiri()">🏠 LHK Saya</button>
     </div>
   </div>
@@ -116,6 +115,11 @@
       <div class="item"><small>Jabatan</small><b id="pJabatan">-</b></div>
       <div class="item"><small>Unit Kerja</small><b id="pUnit">-</b></div>
       <div class="item"><small>Bulan</small><b id="pBulan">-</b></div>
+      <!-- Tombol Status GDrive -->
+      <div class="item" style="cursor:pointer; background:rgba(0,0,0,0.3); border:1px solid #555;" onclick="toggleStatusUpload()" title="Klik untuk mengubah status Upload GDrive Anda">
+        <small>Status GDrive LHK</small>
+        <b id="pStatusUpload" style="color:var(--danger)">❌ Belum Upload</b>
+      </div>
     </div>
   </section>
 
@@ -150,7 +154,7 @@
   <h2 id="modalTitle">Isi Kegiatan</h2>
   <input type="hidden" id="arrayIndex"> <input type="hidden" id="insertAfter">
   <div class="grid">
-    <div class="field"><label>Nomor (Otomatis)</label><input id="nomor" type="number" readonly style="background:#2a2a2a; color:#888;" title="Auto Generate"></div>
+    <div class="field"><label>Nomor (Otomatis)</label><input id="nomor" type="number" readonly style="background:#2a2a2a; color:#888;"></div>
     <div class="field" id="tglField"><label>Hari / Tanggal</label>
       <input type="date" id="tanggalRaw" onchange="formatTanggalIndo()"><input type="hidden" id="tanggalStr">
     </div>
@@ -176,7 +180,10 @@
     <div class="field"><label>Ganti Password</label><input type="text" id="sPassword" placeholder="Abaikan jika tidak diganti"></div>
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>DATA PEGAWAI</b></label></div>
     <div class="field"><label>Nama Lengkap</label><input id="sNama"></div><div class="field"><label>NIP Pegawai</label><input id="sNip"></div>
-    <div class="field"><label>Jabatan (Isi Kasubbag/Sekretaris untuk hak akses pimpinan)</label><input id="sJabatan"></div>
+    
+    <!-- KUNCI JABATAN -->
+    <div class="field"><label>Jabatan (Ditetapkan Sistem)</label><input id="sJabatan" readonly style="background:#2a2a2a; color:#888;"></div>
+    
     <div class="field"><label>Unit Kerja</label>
       <select id="sUnit">
         <option value="">-- Pilih Unit Kerja --</option>
@@ -191,23 +198,29 @@
       <label style="color:#fff"><b>INFO ATASAN (Ditarik Otomatis)</b></label>
       <select id="sPilihAtasan" onchange="pilihAtasan()"><option value="">-- Sedang memuat atasan... --</option></select>
     </div>
-    <!-- JABATAN ATASAN READONLY -->
     <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle" readonly style="background:#2a2a2a; color:#888;"></div>
     <div class="field"><label>Nama Atasan</label><input id="sAtasanName"></div><div class="field"><label>NIP Atasan</label><input id="sAtasanNip"></div>
     <div class="field"><label style="color:var(--primary)">TTD Atasan (Kiri) <small id="infoTtdAtasan"></small></label><input type="file" id="sTtdAtasanFile" accept="image/png, image/jpeg" style="padding:8px"></div>
     <div class="field"><label style="color:var(--success)">TTD Anda (Kanan)</label><input type="file" id="sTtdFile" accept="image/png, image/jpeg" style="padding:8px"></div>
     
-    <!-- FITUR NOTIFIKASI -->
+    <!-- FITUR NOTIFIKASI DINAMIS -->
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px">
-      <label style="color:var(--success);"><b>🔔 PENGINGAT LHK (NOTIFIKASI)</b></label>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <select id="sNotifTime" style="flex:1;">
-          <option value="">-- Matikan Pengingat --</option>
-          <option value="16:00">Ingatkan Setiap Jam 16:00</option>
-          <option value="17:00">Ingatkan Setiap Jam 17:00</option>
-          <option value="18:00">Ingatkan Setiap Jam 18:00</option>
-        </select>
-        <button class="primary" onclick="aktifkanNotif()" style="padding:12px;">Izinkan Akses</button>
+      <label style="color:var(--success); font-size:14px;"><b>🔔 PENGINGAT LHK (NOTIFIKASI)</b></label>
+      <div style="background:#2a2a2a; padding:15px; border-radius:8px;">
+        <label style="display:block; margin-bottom:8px; color:#aaa;">Pilih Hari Pengingat:</label>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+          <label style="color:#fff; cursor:pointer;"><input type="checkbox" value="1" class="cb-hari"> Sen</label>
+          <label style="color:#fff; cursor:pointer;"><input type="checkbox" value="2" class="cb-hari"> Sel</label>
+          <label style="color:#fff; cursor:pointer;"><input type="checkbox" value="3" class="cb-hari"> Rab</label>
+          <label style="color:#fff; cursor:pointer;"><input type="checkbox" value="4" class="cb-hari"> Kam</label>
+          <label style="color:#fff; cursor:pointer;"><input type="checkbox" value="5" class="cb-hari"> Jum</label>
+          <label style="color:#fff; cursor:pointer;"><input type="checkbox" value="6" class="cb-hari"> Sab</label>
+          <label style="color:#fff; cursor:pointer;"><input type="checkbox" value="0" class="cb-hari"> Min</label>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="time" id="jamNotif" style="width:130px; padding:10px;">
+          <button class="primary" onclick="aktifkanNotif()" style="padding:10px 15px; font-size:13px;">Aktifkan Akses Browser</button>
+        </div>
       </div>
     </div>
 
@@ -224,25 +237,24 @@
     <iframe id="pdfFrame"></iframe>
     <div style="display:flex; gap:10px; margin-top:10px;">
       <button class="secondary" style="flex:1; padding:14px;" onclick="eksekusiUnduhPdf()">⬇️ UNDUH LOKAL</button>
-      <!-- TOMBOL MENGARAH KE LINK GDRIVE -->
       <button class="primary" style="flex:1; padding:14px;" onclick="eksekusiSimpanKeDrive()">☁️ UPLOAD KE DRIVE KPU</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Status Upload -->
+<!-- Modal Status Upload GDrive -->
 <div class="modal" id="modalStatus">
   <div class="dialog">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h2 style="margin:0">Status Upload LHK Bawahan</h2>
+      <h2 style="margin:0">Status Upload GDrive Bawahan</h2>
       <button class="danger" onclick="closeModal('modalStatus')">✖ Tutup</button>
     </div>
-    <table style="width:100%; border-collapse: collapse; margin-top:10px; background:#252525;">
+    <!-- Tabel Tidak Membeku -->
+    <table style="width:100%; border-collapse: collapse; margin-top:10px; background:#252525; min-width:auto;">
       <thead>
         <tr>
           <th style="padding:10px; border:1px solid #555;">NAMA BAWAHAN</th>
-          <th style="padding:10px; border:1px solid #555;">TOTAL KEGIATAN</th>
-          <th style="padding:10px; border:1px solid #555;">STATUS</th>
+          <th style="padding:10px; border:1px solid #555;">STATUS GDRIVE</th>
         </tr>
       </thead>
       <tbody id="statusTbody"></tbody>
@@ -251,18 +263,16 @@
 </div>
 
 <script>
-// Daftarkan Service Worker agar bisa Installable (PWA)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+  navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
 }
 
 let cred={loginId:'', password:'', sheetName:''}, profile={}, rows=[], ttdB64=null, ttdAtasanB64=null;
 let base64PdfUtama = null, targetSheetView = null; 
 let listAtasanDB = []; 
-let listBawahanSheets = []; // Disimpan untuk cek status
-let currentRole = 'User';
+let listBawahanSheets = []; 
+let notifInterval;
 
-// Format Tanggal Cerdas & Rapi (BUG DIPERBAIKI)
 function formatTanggalLengkap(tglStr) {
   if (!tglStr) return '';
   if (tglStr.includes(',')) return tglStr; 
@@ -281,8 +291,6 @@ function formatTanggalLengkap(tglStr) {
   
   const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  
-  // Perbaikan bug penutup array yang sebelumnya kurang bracket "]"
   return `${namaHari[d.getDay()]}, ${d.getDate()} ${namaBulan[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -307,13 +315,14 @@ function doLogin() {
     cred.sheetName = res.sheetName; 
     document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainScreen').style.display = 'block'; 
     loadData();
-    cekNotifikasi(); // Mulai jalankan timer notifikasi jika diaktifkan
+    cekNotifikasi(); 
   }).catch(e => { alert(e); });
 }
 
 function doLogout() {
   cred = {loginId:'', password:'', sheetName:''}; targetSheetView = null;
   document.getElementById('mainScreen').style.display = 'none'; document.getElementById('loginScreen').style.display = 'block';
+  if(notifInterval) clearInterval(notifInterval);
 }
 
 function loadData() {
@@ -328,24 +337,39 @@ function loadData() {
     document.getElementById('pUnit').textContent = unitFix;
     document.getElementById('pBulan').textContent = profile.bulanLaporan || '-';
     
+    // Status Upload GDrive
+    document.getElementById('pStatusUpload').textContent = profile.status_upload ? '✅ Selesai Upload' : '❌ Belum Upload';
+    document.getElementById('pStatusUpload').style.color = profile.status_upload ? 'var(--success)' : 'var(--danger)';
+    
     if(!targetSheetView) { cekAdminBawahan(); document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri"; } 
     else { document.getElementById('pModeTampilan').textContent = `Melihat LHK: ${profile.username}`; }
-    
-    // Set status notif di dropdown
-    document.getElementById('sNotifTime').value = localStorage.getItem('lhkNotifTime') || '';
     
     renderRowsUI(); setMsg("Data termuat.");
   }).catch(e => setMsg("Error: "+e, "red"));
 }
 
+function toggleStatusUpload() {
+    if(targetSheetView) return alert("Anda hanya bisa mengubah status LHK Anda sendiri.");
+    const newStatus = !profile.status_upload;
+    const msg = newStatus ? "Tandai LHK bulan ini SUDAH di-upload ke Google Drive?" : "Batalkan status? (Tandai belum upload)";
+    if(confirm(msg)) {
+        setMsg("Menyimpan status...", "var(--warning)");
+        callApi('updateStatusUpload', { isUploaded: newStatus }).then(() => {
+            profile.status_upload = newStatus;
+            document.getElementById('pStatusUpload').textContent = newStatus ? '✅ Selesai Upload' : '❌ Belum Upload';
+            document.getElementById('pStatusUpload').style.color = newStatus ? 'var(--success)' : 'var(--danger)';
+            setMsg("Status GDrive diperbarui.", "var(--success)");
+        });
+    }
+}
+
 function cekAdminBawahan() {
   callApi('getBawahan').then(d => {
-    currentRole = d.role;
     if (d.role === 'Super Admin' || d.role === 'Admin') {
       const panel = document.getElementById('adminPanel'); const sel = document.getElementById('bawahanSelect');
       if (d.bawahan && d.bawahan.length > 0) {
         panel.style.display = 'block';
-        listBawahanSheets = d.bawahan.map(b => b.sheet); // Simpan nama untuk Cek Status
+        listBawahanSheets = d.bawahan.map(b => b.sheet); 
         sel.innerHTML = '<option value="">-- Pilih LHK Bawahan --</option>' + d.bawahan.map(b => `<option value="${b.sheet}">${b.name} (${b.unit || b.role})</option>`).join('');
       }
     }
@@ -355,7 +379,6 @@ function cekAdminBawahan() {
 function lihatLhkBawahan() { const sel = document.getElementById('bawahanSelect').value; if (!sel) return alert("Pilih bawahan!"); targetSheetView = sel; loadData(); }
 function kembaliKeLhkSendiri() { targetSheetView = null; loadData(); }
 
-// FITUR PIMPINAN: CEK STATUS UPLOAD LHK BAWAHAN
 async function cekStatusUpload() {
     setMsg("Memuat status bawahan...", "var(--warning)");
     if(listBawahanSheets.length === 0) return alert("Belum ada bawahan.");
@@ -369,13 +392,12 @@ async function cekStatusUpload() {
         for (let i = 1; i < selectBox.options.length; i++) {
             const sheet = selectBox.options[i].value;
             const nama = selectBox.options[i].text.split('(')[0].trim();
-            const count = res.data[sheet] || 0;
-            const status = count > 0 ? `<b style="color:var(--success)">Selesai Diisi</b>` : `<b style="color:var(--danger)">Masih Kosong</b>`;
+            const isUploaded = res.data[sheet];
+            const statusHtml = isUploaded ? `<b style="color:var(--success)">✅ Sudah Upload</b>` : `<b style="color:var(--danger)">❌ Belum Upload</b>`;
             
             html += `<tr>
                 <td style="padding:10px; border:1px solid #555; text-align:left;">${nama}</td>
-                <td style="padding:10px; border:1px solid #555;">${count} Kegiatan</td>
-                <td style="padding:10px; border:1px solid #555;">${status}</td>
+                <td style="padding:10px; border:1px solid #555;">${statusHtml}</td>
             </tr>`;
         }
         tbody.innerHTML = html;
@@ -384,43 +406,30 @@ async function cekStatusUpload() {
     } catch(e) { alert("Gagal mengambil status: " + e); }
 }
 
-
 function renderRowsUI() {
   const tb = document.getElementById('tbody');
   if(!rows.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px">Belum ada kegiatan.</td></tr>'; return; }
   
   let html = '';
   for (let i = 0; i < rows.length; i++) {
-    let r = rows[i];
-    let isLanjutan = !r.nomor && !r.tanggal;
-    
+    let r = rows[i]; let isLanjutan = !r.nomor && !r.tanggal;
     if (!isLanjutan) {
       let rowspan = 1;
-      for (let j = i + 1; j < rows.length; j++) {
-        if (!rows[j].nomor && !rows[j].tanggal) rowspan++; else break;
-      }
+      for (let j = i + 1; j < rows.length; j++) { if (!rows[j].nomor && !rows[j].tanggal) rowspan++; else break; }
       html += `<tr>
         <td rowspan="${rowspan}">${r.nomor}</td>
         <td rowspan="${rowspan}" style="font-weight:bold;">${formatTanggalLengkap(r.tanggal)}</td>
-        <td>${r.pukul}</td>
-        <td>${r.uraian.replace(/\n/g,'<br>')}</td>
-        <td>${r.jumlah||''}</td>
+        <td>${r.pukul}</td><td>${r.uraian.replace(/\n/g,'<br>')}</td><td>${r.jumlah||''}</td>
         <td>${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
         <td>${r.keterangan||''}</td>
-        <td>
-          <div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div>
-        </td>
+        <td><div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div></td>
       </tr>`;
     } else {
       html += `<tr>
-        <td>${r.pukul}</td>
-        <td>${r.uraian.replace(/\n/g,'<br>')}</td>
-        <td>${r.jumlah||''}</td>
+        <td>${r.pukul}</td><td>${r.uraian.replace(/\n/g,'<br>')}</td><td>${r.jumlah||''}</td>
         <td>${r.link?'<a href="'+r.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
         <td>${r.keterangan||''}</td>
-        <td>
-          <div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div>
-        </td>
+        <td><div class="action-group"><button class="secondary" onclick="openEdit(${i})">✏️</button><button class="primary" onclick="addLanjutan(${i})">➕ Lanjut</button><button class="danger" onclick="hapusRow(${i})">🗑️</button></div></td>
       </tr>`;
     }
   }
@@ -446,18 +455,23 @@ async function openSettings() {
   document.getElementById('sAtasanTitle').value = profile.atasanTitle || ''; 
   document.getElementById('sAtasanName').value = profile.atasanName || ''; 
   document.getElementById('sAtasanNip').value = profile.atasanNip || ''; 
-  ttdB64 = profile.ttdBase64 || null;
-  ttdAtasanB64 = profile.ttdAtasanBase64 || null;
+  ttdB64 = profile.ttdBase64 || null; ttdAtasanB64 = profile.ttdAtasanBase64 || null;
+
+  try {
+    const conf = JSON.parse(localStorage.getItem('lhkNotifConfig'));
+    if(conf) {
+      document.getElementById('jamNotif').value = conf.time || '';
+      document.querySelectorAll('.cb-hari').forEach(cb => { cb.checked = conf.days.includes(parseInt(cb.value)); });
+    }
+  } catch(e) {}
 
   try {
     const res = await callApi('getAtasanList');
     listAtasanDB = res.data || [];
     let optHtml = '<option value="">-- Pilih Atasan --</option>';
-    listAtasanDB.forEach((a, i) => {
-      optHtml += `<option value="${i}">${a.jabatan} (${a.nama || a.username})</option>`;
-    });
+    listAtasanDB.forEach((a, i) => { optHtml += `<option value="${i}">${a.jabatan} (${a.nama || a.username})</option>`; });
     document.getElementById('sPilihAtasan').innerHTML = optHtml;
-  } catch(e) { console.error("Gagal menarik daftar atasan:", e); }
+  } catch(e) { console.error(e); }
 
   document.getElementById('modalSettings').classList.add('show');
 }
@@ -471,11 +485,9 @@ function pilihAtasan() {
     document.getElementById('sAtasanNip').value = a.nip || ''; 
     
     if(a.ttd_base64) {
-      ttdAtasanB64 = a.ttd_base64;
-      document.getElementById('infoTtdAtasan').textContent = "(✅ Otomatis ditarik)";
+      ttdAtasanB64 = a.ttd_base64; document.getElementById('infoTtdAtasan').textContent = "(✅ Otomatis ditarik)";
     } else {
-      ttdAtasanB64 = null;
-      document.getElementById('infoTtdAtasan').textContent = "(⚠️ Atasan belum upload TTD)";
+      ttdAtasanB64 = null; document.getElementById('infoTtdAtasan').textContent = "(⚠️ Atasan belum upload TTD)";
     }
   } 
 }
@@ -485,40 +497,49 @@ document.getElementById('sTtdAtasanFile').addEventListener('change', e => { cons
 
 function saveSettings() {
   setMsg("Menyimpan profil...", "white"); closeModal('modalSettings');
-  const p = { username: document.getElementById('sUsername').value, password: document.getElementById('sPassword').value, bulanLaporan: document.getElementById('sBulan').value, nama: document.getElementById('sNama').value, nip: document.getElementById('sNip').value, jabatan: document.getElementById('sJabatan').value, unitKerja: document.getElementById('sUnit').value, atasanTitle: document.getElementById('sAtasanTitle').value, atasanName: document.getElementById('sAtasanName').value, atasanNip: document.getElementById('sAtasanNip').value };
+  const p = { username: document.getElementById('sUsername').value, password: document.getElementById('sPassword').value, bulanLaporan: document.getElementById('sBulan').value, nama: document.getElementById('sNama').value, nip: document.getElementById('sNip').value, unitKerja: document.getElementById('sUnit').value, atasanTitle: document.getElementById('sAtasanTitle').value, atasanName: document.getElementById('sAtasanName').value, atasanNip: document.getElementById('sAtasanNip').value };
   
   if(p.username) cred.loginId = p.username; if(p.password) cred.password = p.password;
   
-  // Save Notif Time
-  const notifVal = document.getElementById('sNotifTime').value;
-  if(notifVal) { localStorage.setItem('lhkNotifTime', notifVal); cekNotifikasi(); } 
-  else { localStorage.removeItem('lhkNotifTime'); }
+  // Set Notification Profile Local Storage
+  const selectedDays = Array.from(document.querySelectorAll('.cb-hari:checked')).map(cb => parseInt(cb.value));
+  const jamVal = document.getElementById('jamNotif').value;
+  if(jamVal && selectedDays.length > 0) {
+     localStorage.setItem('lhkNotifConfig', JSON.stringify({ days: selectedDays, time: jamVal }));
+     cekNotifikasi();
+  } else {
+     localStorage.removeItem('lhkNotifConfig');
+  }
   
   callApi('saveProfile', { profile: p, ttdBase64: ttdB64, ttdAtasanBase64: ttdAtasanB64 }).then(loadData).catch(e => alert(e));
 }
 
-// FITUR NOTIFIKASI
+// FITUR NOTIFIKASI DINAMIS
 function aktifkanNotif() {
   if (!("Notification" in window)) { alert("Browser ini tidak mendukung notifikasi."); return; }
   Notification.requestPermission().then(permission => {
-    if (permission === "granted") alert("Izin notifikasi diberikan! Pilih jam pengingat lalu Simpan.");
+    if (permission === "granted") alert("Izin diberikan! Pastikan Anda mencentang Hari dan mengatur Jam, lalu klik Simpan.");
     else alert("Izin notifikasi ditolak.");
   });
 }
 function cekNotifikasi() {
-  setInterval(() => {
-    const notifTime = localStorage.getItem('lhkNotifTime');
-    if(!notifTime || Notification.permission !== "granted") return;
-    const now = new Date();
-    const currTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    if(currTime === notifTime && now.getSeconds() === 0) { 
-      new Notification("LHK KPU - Pengingat Laporan", { body: "Waktunya mengisi Laporan Harian Kinerja (LHK) Anda hari ini!", icon: "https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg" });
-    }
+  if(notifInterval) clearInterval(notifInterval);
+  notifInterval = setInterval(() => {
+    try {
+        const conf = JSON.parse(localStorage.getItem('lhkNotifConfig'));
+        if(!conf || Notification.permission !== "granted") return;
+        const now = new Date();
+        const currTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        
+        if(conf.days.includes(now.getDay()) && currTime === conf.time && now.getSeconds() === 0) { 
+          new Notification("LHK KPU - Pengingat", { body: "Jangan lupa mengisi LHK dan Upload ke GDrive hari ini!", icon: "https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg" });
+        }
+    } catch(e){}
   }, 1000); 
 }
 
 function generateBulan() {
-  if(!confirm("Buat baris tanggal otomatis untuk bulan ini? (Data lama bulan ini akan dihapus)")) return;
+  if(!confirm("Buat baris otomatis bulan ini? (Data lama akan dihapus)")) return;
   const bulanStr = profile.bulanLaporan || 'Oktober 2026';
   const names = ['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
   let m = 9, y = 2026;
@@ -539,62 +560,35 @@ function generateBulan() {
 function openAdd() { 
   document.getElementById('modalTitle').textContent = 'Tambah Baris Baru'; document.getElementById('arrayIndex').value = ''; document.getElementById('insertAfter').value='';
   let maxNum = 0; rows.forEach(r => { if(r.nomor && !isNaN(r.nomor)) maxNum = Math.max(maxNum, Number(r.nomor)); });
-  document.getElementById('nomor').value = maxNum + 1; 
-  document.getElementById('tanggalRaw').readOnly = false; document.getElementById('tanggalRaw').value = '';
+  document.getElementById('nomor').value = maxNum + 1; document.getElementById('tanggalRaw').readOnly = false; document.getElementById('tanggalRaw').value = '';
   document.getElementById('tanggalStr').value=''; document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('keterangan').value=''; 
   document.getElementById('waktuContainer').style.display = 'flex'; document.getElementById('modalForm').classList.add('show'); 
 }
 
 function openEdit(index) { 
-  const r = rows[index];
-  document.getElementById('modalTitle').textContent = 'Isi Kegiatan'; 
-  document.getElementById('arrayIndex').value = index; 
-  document.getElementById('insertAfter').value='';
-  document.getElementById('nomor').value = r.nomor; 
-  document.getElementById('tanggalStr').value = formatTanggalLengkap(r.tanggal); 
+  const r = rows[index]; document.getElementById('modalTitle').textContent = 'Isi Kegiatan'; document.getElementById('arrayIndex').value = index; document.getElementById('insertAfter').value='';
+  document.getElementById('nomor').value = r.nomor; document.getElementById('tanggalStr').value = formatTanggalLengkap(r.tanggal); 
+  if(!r.nomor) document.getElementById('tanggalRaw').style.display = 'none'; else document.getElementById('tanggalRaw').style.display = 'block'; 
   
-  if(!r.nomor) { document.getElementById('tanggalRaw').style.display = 'none'; } 
-  else { document.getElementById('tanggalRaw').style.display = 'block'; }
-  
-  document.getElementById('waktuContainer').style.display = 'flex'; 
-  document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value='';
-  if(r.pukul) {
-     const splitJam = r.pukul.replace(' WIB','').split('-');
-     if(splitJam[0]) document.getElementById('pukulAwal').value = splitJam[0].trim();
-     if(splitJam[1]) document.getElementById('pukulAkhir').value = splitJam[1].trim();
-  }
-  document.getElementById('uraian').value = r.uraian; 
-  document.getElementById('jumlah').value = r.jumlah; 
-  document.getElementById('link').value = r.link; 
-  document.getElementById('keterangan').value = r.keterangan || '';
+  document.getElementById('waktuContainer').style.display = 'flex'; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value='';
+  if(r.pukul) { const s = r.pukul.replace(' WIB','').split('-'); if(s[0]) document.getElementById('pukulAwal').value = s[0].trim(); if(s[1]) document.getElementById('pukulAkhir').value = s[1].trim(); }
+  document.getElementById('uraian').value = r.uraian; document.getElementById('jumlah').value = r.jumlah; document.getElementById('link').value = r.link; document.getElementById('keterangan').value = r.keterangan || '';
   document.getElementById('modalForm').classList.add('show'); 
 }
 
 function addLanjutan(index) {
-  document.getElementById('modalTitle').textContent = 'Tambah Lanjutan'; 
-  document.getElementById('arrayIndex').value = ''; 
-  document.getElementById('insertAfter').value = index; 
-  document.getElementById('nomor').value=''; 
-  document.getElementById('tanggalStr').value=''; 
-  document.getElementById('tanggalRaw').style.display = 'none'; 
-  document.getElementById('waktuContainer').style.display = 'flex'; 
-  document.getElementById('uraian').value=''; 
-  document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; 
-  document.getElementById('jumlah').value=''; document.getElementById('link').value=''; document.getElementById('keterangan').value=''; 
+  document.getElementById('modalTitle').textContent = 'Tambah Lanjutan'; document.getElementById('arrayIndex').value = ''; document.getElementById('insertAfter').value = index; 
+  document.getElementById('nomor').value=''; document.getElementById('tanggalStr').value=''; document.getElementById('tanggalRaw').style.display = 'none'; document.getElementById('waktuContainer').style.display = 'flex'; 
+  document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('jumlah').value=''; document.getElementById('link').value=''; document.getElementById('keterangan').value=''; 
   document.getElementById('modalForm').classList.add('show'); 
 }
   
 function saveRow() { 
   closeModal('modalForm'); setMsg("Menyimpan baris...", "white"); 
   const index = document.getElementById('arrayIndex').value; const insertAfterVal = document.getElementById('insertAfter').value; 
-  
-  let jamGabungan = ''; 
-  if(document.getElementById('pukulAwal').value && document.getElementById('pukulAkhir').value) {
-      jamGabungan = document.getElementById('pukulAwal').value + ' - ' + document.getElementById('pukulAkhir').value + ' WIB';
-  }
-  
+  let jamGabungan = ''; if(document.getElementById('pukulAwal').value && document.getElementById('pukulAkhir').value) jamGabungan = document.getElementById('pukulAwal').value + ' - ' + document.getElementById('pukulAkhir').value + ' WIB';
   const newData = { nomor: document.getElementById('nomor').value, tanggal: document.getElementById('tanggalStr').value, pukul: jamGabungan, uraian: document.getElementById('uraian').value, jumlah: document.getElementById('jumlah').value, link: document.getElementById('link').value, keterangan: document.getElementById('keterangan').value };
-  if(index !== '') { rows[index] = newData; } else if(insertAfterVal !== '') { rows.splice(Number(insertAfterVal) + 1, 0, newData); } else { rows.push(newData); }
+  if(index !== '') rows[index] = newData; else if(insertAfterVal !== '') rows.splice(Number(insertAfterVal) + 1, 0, newData); else rows.push(newData);
   callApi('syncRows', { rows }).then(loadData);
 }
 
@@ -602,79 +596,47 @@ function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus..
 
 function previewPdf() {
   setMsg("Memproses PDF Presisi Vektor...", "var(--warning)");
-
   try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4'); 
-
-    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-    doc.text("REKAP LAPORAN CAPAIAN KINERJA", 105, 15, { align: "center" });
-    doc.text("APARATUR SIPIL NEGARA (ASN)", 105, 20, { align: "center" });
-    doc.text("KPU PROVINSI SUMATERA UTARA", 105, 25, { align: "center" });
-
-    let unitKerjaFix = profile.unitKerja || '-';
-    if(unitKerjaFix.includes("Subbagian Keuangan Umum")) unitKerjaFix = unitKerjaFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
+    const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4'); 
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text("REKAP LAPORAN CAPAIAN KINERJA", 105, 15, { align: "center" }); doc.text("APARATUR SIPIL NEGARA (ASN)", 105, 20, { align: "center" }); doc.text("KPU PROVINSI SUMATERA UTARA", 105, 25, { align: "center" });
+    let unitKerjaFix = profile.unitKerja || '-'; if(unitKerjaFix.includes("Subbagian Keuangan Umum")) unitKerjaFix = unitKerjaFix.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
 
     doc.autoTable({
-      startY: 32, theme: 'plain', styles: { fontSize: 10, cellPadding: 1, textColor: 0, font: "helvetica" }, margin: { left: 2, right: 2 }, 
-      columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 5, halign: 'center' }, 2: { cellWidth: 176 } },
-      body: [
-        ['NAMA', ':', profile.nama || profile.username || '-'],
-        ['NIP', ':', profile.nip || '-'],
-        ['JABATAN', ':', profile.jabatan || '-'],
-        ['UNIT KERJA', ':', unitKerjaFix],
-        ['BULAN', ':', profile.bulanLaporan || '-']
-      ]
+      startY: 32, theme: 'plain', styles: { fontSize: 10, cellPadding: 1, textColor: 0, font: "helvetica" }, margin: { left: 2, right: 2 }, columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 5, halign: 'center' }, 2: { cellWidth: 176 } },
+      body: [ ['NAMA', ':', profile.nama || profile.username || '-'], ['NIP', ':', profile.nip || '-'], ['JABATAN', ':', profile.jabatan || '-'], ['UNIT KERJA', ':', unitKerjaFix], ['BULAN', ':', profile.bulanLaporan || '-'] ]
     });
 
-    let finalY = doc.lastAutoTable.finalY;
-    doc.setFontSize(10); doc.setFont("helvetica", "normal");
-    doc.text("JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT", 2, finalY + 5);
+    let finalY = doc.lastAutoTable.finalY; doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT", 2, finalY + 5);
 
     let tableBody = [];
     for (let i = 0; i < rows.length; i++) {
       let r = rows[i]; let isLanjutan = !r.nomor && !r.tanggal; let rowData = [];
       if (!isLanjutan) {
-        let rowspan = 1;
-        for (let j = i + 1; j < rows.length; j++) { if (!rows[j].nomor && !rows[j].tanggal) rowspan++; else break; }
-        rowData.push({ content: r.nomor || '', rowSpan: rowspan });
-        rowData.push({ content: formatTanggalLengkap(r.tanggal), rowSpan: rowspan });
+        let rowspan = 1; for (let j = i + 1; j < rows.length; j++) { if (!rows[j].nomor && !rows[j].tanggal) rowspan++; else break; }
+        rowData.push({ content: r.nomor || '', rowSpan: rowspan }); rowData.push({ content: formatTanggalLengkap(r.tanggal), rowSpan: rowspan });
       }
-      rowData.push((r.pukul || '').trim()); rowData.push(r.uraian || ''); rowData.push(r.jumlah || ''); rowData.push(r.link || ''); rowData.push(r.keterangan || '');
-      tableBody.push(rowData);
+      rowData.push((r.pukul || '').trim()); rowData.push(r.uraian || ''); rowData.push(r.jumlah || ''); rowData.push(r.link || ''); rowData.push(r.keterangan || ''); tableBody.push(rowData);
     }
 
     doc.autoTable({
-      startY: finalY + 8, theme: 'grid',
-      headStyles: { fillColor: [255, 255, 255], textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle', cellPadding: { top: 4, bottom: 2, left: 2, right: 2 } },
-      bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
-      styles: { font: "helvetica", fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+      startY: finalY + 8, theme: 'grid', headStyles: { fillColor: [255, 255, 255], textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle', cellPadding: { top: 4, bottom: 2, left: 2, right: 2 } },
+      bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' }, styles: { font: "helvetica", fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
       head: [['NO', 'HARI/TANGGAL', 'PUKUL', 'URAIAN\nKEGIATAN', 'JUMLAH\nREALISASI\nBUKTI DUKUNG', 'LINK\nBUKTI DUKUNG', 'KETERANGAN']],
-      body: tableBody,
-      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 32 }, 2: { cellWidth: 20 }, 3: { cellWidth: 50, halign: 'center' }, 4: { cellWidth: 28 }, 5: { cellWidth: 38 }, 6: { cellWidth: 28 } },
+      body: tableBody, columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 32 }, 2: { cellWidth: 20 }, 3: { cellWidth: 50, halign: 'center' }, 4: { cellWidth: 28 }, 5: { cellWidth: 38 }, 6: { cellWidth: 28 } },
       margin: { left: 2, right: 2 }, rowPageBreak: 'avoid' 
     });
 
-    finalY = doc.lastAutoTable.finalY;
-    if (finalY > 220) { doc.addPage(); finalY = 20; }
-
-    const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    let blnStr = profile.bulanLaporan || 'Oktober 2026';
-    let mIdx = 9; let yyyy = 2026;
+    finalY = doc.lastAutoTable.finalY; if (finalY > 220) { doc.addPage(); finalY = 20; }
+    const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']; let blnStr = profile.bulanLaporan || 'Oktober 2026'; let mIdx = 9; let yyyy = 2026;
     for(let i=0; i<months.length; i++) { if(blnStr.toLowerCase().includes(months[i].toLowerCase())) { mIdx = i; break; } }
-    const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]);
-    const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
-    const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
+    const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]); const lastDay = new Date(yyyy, mIdx + 1, 0).getDate(); const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
     const isSekretaris = profile.jabatan.toLowerCase().includes('sekretaris');
     
     doc.autoTable({
-      startY: finalY + 10, theme: 'plain', styles: { halign: 'center', cellPadding: 1, fontSize: 10, font: "helvetica", textColor: 0 }, margin: { left: 10, right: 10 },
-      columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 20 }, 2: { cellWidth: 85 } },
+      startY: finalY + 10, theme: 'plain', styles: { halign: 'center', cellPadding: 1, fontSize: 10, font: "helvetica", textColor: 0 }, margin: { left: 10, right: 10 }, columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 20 }, 2: { cellWidth: 85 } },
       body: [
-        [ (profile.atasanTitle && !isSekretaris) ? "Diketahui/Disetujui" : "", "", dateLabel ],
-        [ (profile.atasanTitle && !isSekretaris) ? profile.atasanTitle : "", "", profile.jabatan ],
-        [ "\n\n\n", "", "\n\n\n" ],
-        [ (profile.atasanTitle && !isSekretaris) ? profile.atasanName : "", "", profile.nama || profile.username ],
+        [ (profile.atasanTitle && !isSekretaris) ? "Diketahui/Disetujui" : "", "", dateLabel ], [ (profile.atasanTitle && !isSekretaris) ? profile.atasanTitle : "", "", profile.jabatan ],
+        [ "\n\n\n", "", "\n\n\n" ], [ (profile.atasanTitle && !isSekretaris) ? profile.atasanName : "", "", profile.nama || profile.username ],
         [ (profile.atasanTitle && !isSekretaris) ? "NIP. " + profile.atasanNip : "", "", "NIP. " + (profile.nip || '-') ]
       ],
       didDrawCell: function(data) {
@@ -684,12 +646,7 @@ function previewPdf() {
         }
       }
     });
-
-    base64PdfUtama = doc.output('datauristring');
-    document.getElementById('pdfFrame').src = base64PdfUtama;
-    document.getElementById('modalPdf').classList.add('show');
-    setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
-
+    base64PdfUtama = doc.output('datauristring'); document.getElementById('pdfFrame').src = base64PdfUtama; document.getElementById('modalPdf').classList.add('show'); setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
   } catch (error) { setMsg("Gagal merender PDF.", "red"); console.error(error); }
 }
 
@@ -699,16 +656,28 @@ function eksekusiUnduhPdf() {
   document.body.appendChild(a); a.click(); a.remove(); setMsg("PDF berhasil diunduh.", "var(--success)"); closeModal('modalPdf');
 }
 
-// BUKA FOLDER GDRIVE MANUAL KPU
+// BUKA FOLDER GDRIVE MANUAL & TANYAKAN STATUS UPLOAD
 function eksekusiSimpanKeDrive() {
   window.open("https://drive.google.com/drive/folders/1zilbvS0QQEE0iqxlQ1__taC91MKpMhCi?usp=drive_link", "_blank");
   closeModal('modalPdf');
-  setMsg("Membuka Google Drive...", "var(--success)");
+  setMsg("Tautan Google Drive dibuka...", "var(--warning)");
+  
+  setTimeout(() => {
+    if(!profile.status_upload) {
+        if(confirm("Anda telah diarahkan ke Google Drive KPU.\n\nApakah Anda SUDAH SELESAI mengupload file LHK Anda ke folder tersebut?\n(Klik OK jika sudah, untuk mengubah status Anda menjadi 'Selesai Upload')")) {
+           callApi('updateStatusUpload', { isUploaded: true }).then(() => {
+              profile.status_upload = true;
+              document.getElementById('pStatusUpload').textContent = '✅ Selesai Upload';
+              document.getElementById('pStatusUpload').style.color = 'var(--success)';
+              setMsg("Status LHK: Selesai Upload", "var(--success)");
+           });
+        }
+    }
+  }, 1000);
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function setMsg(m, c="var(--success)") { const sm = document.getElementById('statusMsg'); sm.textContent = m; sm.style.color = c; }  
-
 </script>
 </body>
 </html>
