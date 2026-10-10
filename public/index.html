@@ -413,7 +413,7 @@ function saveRow() {
 function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
 
 function previewPdf() { 
-  setMsg("Sedang memproses PDF Presisi A4...", "var(--warning)"); 
+  setMsg("Sedang memproses PDF (Metode Iframe)...", "var(--warning)"); 
   
   let rowsHtml = '';
   for (let i = 0; i < rows.length; i++) {
@@ -427,23 +427,21 @@ function previewPdf() {
         else break;
       }
       rowsHtml += `<tr>
-        <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.nomor||''}</td>
-        <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.tanggal||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <!-- DIUBAH: Uraian Kegiatan sekarang Rata Tengah (Center) -->
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
+        <td>${r.nomor||''}</td>
+        <td>${r.tanggal||''}</td>
+        <td>${r.pukul||''}</td>
+        <td style="text-align:center;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
+        <td>${r.jumlah||''}</td>
+        <td style="word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">Buka Link</a>':''}</td>
+        <td>${r.keterangan||''}</td>
       </tr>`;
     } else {
       rowsHtml += `<tr>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <!-- DIUBAH: Uraian Kegiatan Lanjutan sekarang Rata Tengah (Center) -->
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
-        <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.keterangan||''}</td>
+        <td>${r.pukul||''}</td>
+        <td style="text-align:center;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
+        <td>${r.jumlah||''}</td>
+        <td style="word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">Buka Link</a>':''}</td>
+        <td>${r.keterangan||''}</td>
       </tr>`;
     }
   }
@@ -452,38 +450,48 @@ function previewPdf() {
   let blnStr = profile.bulanLaporan || 'Oktober 2026';
   let mIdx = 9; let yyyy = 2026;
   for(let i=0; i<months.length; i++) { if(blnStr.toLowerCase().includes(months[i].toLowerCase())) { mIdx = i; break; } }
-  const matchYear = blnStr.match(/\b20\d{2}\b/); if(matchYear) yyyy = Number(matchYear[0]);
   const lastDay = new Date(yyyy, mIdx + 1, 0).getDate();
   const dateLabel = `Aek Kanopan, ${lastDay} ${months[mIdx]} ${yyyy}`;
 
   const ttdKiri = profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris') ? 
-    `Diketahui/Disetujui<br>${profile.atasanTitle}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdAtasanBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdAtasanBase64?1:0};"></div>${profile.atasanName}<br>NIP. ${profile.atasanNip}` : '';
+    `Diketahui/Disetujui<br>${profile.atasanTitle}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdAtasanBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px;"></div>${profile.atasanName}<br>NIP. ${profile.atasanNip}` : '';
     
-  const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
+  const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px;"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
-  // KUNCI: Menambahkan min-width: 100% !important pada tabel agar tidak membengkak mengikuti CSS global
+  // METODE BARU: HTML bersih tanpa inline style yang rumit, menggunakan CSS murni.
   const htmlContent = `
-  <div style="width: 720px; margin: 0 auto; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
-    
-    <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <style>
+      body { width: 760px; margin: 0 auto; padding: 10px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; }
+      .header { text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4; }
+      .meta { width: 100%; border: none; font-size: 11px; margin-bottom: 5px; border-collapse: collapse; }
+      .meta td { padding: 2px 0; border: none; }
+      .main-table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; margin-top: 10px; }
+      .main-table th, .main-table td { border: 1px solid black; padding: 5px; text-align: center; vertical-align: middle; word-wrap: break-word; }
+      .ttd-table { width: 100%; margin-top: 30px; border: none; page-break-inside: avoid; border-collapse: collapse; }
+      .ttd-table td { border: none; padding: 0; text-align: center; vertical-align: top; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
       REKAP LAPORAN CAPAIAN KINERJA<br>
       APARATUR SIPIL NEGARA (ASN)<br>
       KPU PROVINSI SUMATERA UTARA
     </div>
 
-    <table style="width: 100% !important; min-width: 100% !important; max-width: 100% !important; border: none; font-size: 11px; margin-bottom: 5px; border-collapse: collapse;">
-      <tr><td style="width: 100px; padding: 2px 0; border: none; text-align: left;">NAMA</td><td style="width: 15px; padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nama || profile.username || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">NIP</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nip || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">JABATAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.jabatan || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">UNIT KERJA</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.unitKerja || '-'}</td></tr>
-      <tr><td style="padding: 2px 0; border: none; text-align: left;">BULAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.bulanLaporan || '-'}</td></tr>
+    <table class="meta">
+      <tr><td style="width: 100px;">NAMA</td><td style="width: 15px; text-align:center;">:</td><td>${profile.nama || profile.username || '-'}</td></tr>
+      <tr><td>NIP</td><td style="text-align:center;">:</td><td>${profile.nip || '-'}</td></tr>
+      <tr><td>JABATAN</td><td style="text-align:center;">:</td><td>${profile.jabatan || '-'}</td></tr>
+      <tr><td>UNIT KERJA</td><td style="text-align:center;">:</td><td>${profile.unitKerja || '-'}</td></tr>
+      <tr><td>BULAN</td><td style="text-align:center;">:</td><td>${profile.bulanLaporan || '-'}</td></tr>
     </table>
 
-    <div style="font-size: 11px; margin-bottom: 10px; text-align: left; text-transform: uppercase;">
-      JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT
-    </div>
+    <div style="font-size: 11px; font-weight: normal;">JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT</div>
 
-    <table style="width: 100% !important; min-width: 100% !important; max-width: 100% !important; border-collapse: collapse; font-size: 10px; table-layout: fixed; word-wrap: break-word; border: 1px solid black;">
+    <table class="main-table">
       <colgroup>
         <col style="width: 4%;">
         <col style="width: 14%;">
@@ -495,50 +503,59 @@ function previewPdf() {
       </colgroup>
       <thead>
         <tr>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">NO</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">HARI/TANGGAL</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">PUKUL</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">URAIAN KEGIATAN</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">LINK BUKTI DUKUNG</th>
-          <th style="padding: 5px; border: 1px solid black; text-align:center; vertical-align:middle;">KETERANGAN</th>
+          <th>NO</th><th>HARI/TANGGAL</th><th>PUKUL</th><th>URAIAN KEGIATAN</th><th>JUMLAH REALISASI<br>BUKTI DUKUNG</th><th>LINK BUKTI DUKUNG</th><th>KETERANGAN</th>
         </tr>
       </thead>
-      <tbody>
-        ${rowsHtml}
-      </tbody>
+      <tbody>${rowsHtml}</tbody>
     </table>
 
-    <table style="width: 100% !important; min-width: 100% !important; max-width: 100% !important; margin-top: 30px; font-size: 11px; border: none; page-break-inside: avoid; border-collapse: collapse;">
+    <table class="ttd-table">
       <tr>
-        <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
-        <td style="width: 10%; border: none; padding: 0;"></td>
-        <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
+        <td style="width: 40%;">${ttdKiri}</td>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">${ttdKanan}</td>
       </tr>
     </table>
-  </div>
+  </body>
+  </html>
   `;
 
-  const opt = {
-    margin:       10, // Margin simetris dan presisi 10mm di setiap sisi
-    filename:     'LHK.pdf',
-    image:        { type: 'jpeg', quality: 1 },
-    html2canvas:  { 
-      scale: 2, 
-      useCORS: true, 
-      windowWidth: 1024 // Memberikan ruang virtual yang cukup agar tidak terpengaruh layar HP
-    },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
+  // METODE BARU: Membuat layar virtual (iframe) yang diisolasi dari layar HP Anda
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.top = '-10000px'; 
+  iframe.style.left = '-10000px'; 
+  iframe.style.width = '800px'; // Mengunci layar virtual ke 800px
+  iframe.style.height = '1200px';
+  document.body.appendChild(iframe);
 
-  html2pdf().set(opt).from(htmlContent).outputPdf('datauristring').then(function(pdfBase64) {
-      base64PdfUtama = pdfBase64;
-      document.getElementById('pdfFrame').src = base64PdfUtama;
-      document.getElementById('modalPdf').classList.add('show');
-      setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
-  }).catch(e => { 
-      setMsg("Error merender PDF: " + e, "red"); 
-  });
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+
+  // Beri jeda 500ms agar layar virtual selesai dimuat sebelum dipotret
+  setTimeout(() => {
+    const opt = {
+      margin:       10, 
+      filename:     'LHK.pdf',
+      image:        { type: 'jpeg', quality: 1 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Melakukan render dari dalam dokumen virtual, bukan dari layar HP
+    html2pdf().set(opt).from(doc.body).outputPdf('datauristring').then(function(pdfBase64) {
+        document.body.removeChild(iframe); // Hapus layar virtual setelah selesai
+        base64PdfUtama = pdfBase64;
+        document.getElementById('pdfFrame').src = base64PdfUtama;
+        document.getElementById('modalPdf').classList.add('show');
+        setMsg("Preview siap. Pilih Unduh atau Simpan.", "var(--success)");
+    }).catch(e => { 
+        document.body.removeChild(iframe);
+        setMsg("Error merender PDF: " + e, "red"); 
+    });
+  }, 500); 
 }
 
 function eksekusiUnduhPdf() {
