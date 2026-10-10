@@ -430,7 +430,7 @@ function previewPdf() {
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.nomor||''}</td>
         <td rowspan="${rowspan}" style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.tanggal||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <!-- Kolom Uraian Kegiatan diubah menjadi rata tengah (center) -->
+        <!-- DIUBAH: Uraian Kegiatan sekarang Rata Tengah (Center) -->
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
@@ -439,7 +439,7 @@ function previewPdf() {
     } else {
       rowsHtml += `<tr>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.pukul||''}</td>
-        <!-- Kolom Uraian Kegiatan diubah menjadi rata tengah (center) -->
+        <!-- DIUBAH: Uraian Kegiatan Lanjutan sekarang Rata Tengah (Center) -->
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.uraian?r.uraian.replace(/\n/g,'<br>'):''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black;">${r.jumlah||''}</td>
         <td style="padding:6px 4px; text-align:center; vertical-align:middle; border:1px solid black; word-wrap:break-word; word-break:break-all;">${r.link?'<a href="'+r.link+'" style="color:blue; text-decoration:none;">'+r.link+'</a>':''}</td>
@@ -461,9 +461,9 @@ function previewPdf() {
     
   const ttdKanan = `${dateLabel}<br>${profile.jabatan}<br><div style="height:70px; display:flex; align-items:center; justify-content:center; margin:5px 0;"><img src="${profile.ttdBase64 || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" style="max-height:70px; max-width:150px; opacity:${profile.ttdBase64?1:0};"></div>${profile.nama || profile.username}<br>NIP. ${profile.nip || '-'}`;
 
-  // KUNCI ABSOLUT: Lebar dikunci paksa ke 800px. Tidak boleh 100% untuk menghindari distorsi layar HP.
+  // KUNCI: Menambahkan min-width: 100% !important pada tabel agar tidak membengkak mengikuti CSS global
   const htmlContent = `
-  <div style="width: 800px; max-width: 800px; min-width: 800px; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white; margin: 0; padding: 0;">
+  <div style="width: 720px; margin: 0 auto; font-family: Arial, sans-serif; font-size: 11px; color: black; background: white;">
     
     <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
       REKAP LAPORAN CAPAIAN KINERJA<br>
@@ -471,7 +471,7 @@ function previewPdf() {
       KPU PROVINSI SUMATERA UTARA
     </div>
 
-    <table style="width: 100%; border: none; font-size: 11px; margin-bottom: 5px; border-collapse: collapse;">
+    <table style="width: 100% !important; min-width: 100% !important; max-width: 100% !important; border: none; font-size: 11px; margin-bottom: 5px; border-collapse: collapse;">
       <tr><td style="width: 100px; padding: 2px 0; border: none; text-align: left;">NAMA</td><td style="width: 15px; padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nama || profile.username || '-'}</td></tr>
       <tr><td style="padding: 2px 0; border: none; text-align: left;">NIP</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.nip || '-'}</td></tr>
       <tr><td style="padding: 2px 0; border: none; text-align: left;">JABATAN</td><td style="padding: 2px 0; border: none; text-align: center;">:</td><td style="padding: 2px 0; border: none; text-align: left;">${profile.jabatan || '-'}</td></tr>
@@ -483,7 +483,7 @@ function previewPdf() {
       JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT
     </div>
 
-    <table style="width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; word-wrap: break-word; border: 1px solid black;">
+    <table style="width: 100% !important; min-width: 100% !important; max-width: 100% !important; border-collapse: collapse; font-size: 10px; table-layout: fixed; word-wrap: break-word; border: 1px solid black;">
       <colgroup>
         <col style="width: 4%;">
         <col style="width: 14%;">
@@ -509,24 +509,24 @@ function previewPdf() {
       </tbody>
     </table>
 
-    <table style="width: 100%; margin-top: 30px; font-size: 11px; border: none; page-break-inside: avoid; border-collapse: collapse;">
+    <table style="width: 100% !important; min-width: 100% !important; max-width: 100% !important; margin-top: 30px; font-size: 11px; border: none; page-break-inside: avoid; border-collapse: collapse;">
       <tr>
-        <td style="width: 40%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
-        <td style="width: 20%; border: none; padding: 0;"></td>
-        <td style="width: 40%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
+        <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKiri}</td>
+        <td style="width: 10%; border: none; padding: 0;"></td>
+        <td style="width: 45%; text-align: center; vertical-align: top; border: none; padding: 0;">${ttdKanan}</td>
       </tr>
     </table>
   </div>
   `;
 
   const opt = {
-    margin:       10, // Margin aman 10mm rata di seluruh sisi A4
+    margin:       10, // Margin simetris dan presisi 10mm di setiap sisi
     filename:     'LHK.pdf',
     image:        { type: 'jpeg', quality: 1 },
     html2canvas:  { 
       scale: 2, 
       useCORS: true, 
-      windowWidth: 820 // Dibuat lebih besar 20px dari konten agar tidak ada resiko terpotong dari sisi manapun
+      windowWidth: 1024 // Memberikan ruang virtual yang cukup agar tidak terpengaruh layar HP
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
