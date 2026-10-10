@@ -418,9 +418,8 @@ function previewPdf() {
   setMsg("Memproses PDF Presisi Vektor...", "var(--warning)");
 
   try {
-    // Memanggil mesin pembuat PDF murni
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4'); // Kertas Portrait, Milimeter, Ukuran A4
+    const doc = new jsPDF('p', 'mm', 'a4'); 
 
     // ==========================================
     // 1. MENGGAMBAR KOP JUDUL
@@ -458,7 +457,7 @@ function previewPdf() {
     doc.text("JAM KERJA PERHARI MINIMAL 7 JAM 30 MENIT", 10, finalY + 5);
 
     // ==========================================
-    // 3. MENYUSUN STRUKTUR TABEL (ANTI TERBELAH)
+    // 3. MENYUSUN STRUKTUR TABEL 
     // ==========================================
     let tableBody = [];
     for (let i = 0; i < rows.length; i++) {
@@ -466,7 +465,6 @@ function previewPdf() {
       let isLanjutan = !r.nomor && !r.tanggal;
       let rowData = [];
 
-      // Logika rowspan (penggabungan sel) untuk baris utama dan lanjutan
       if (!isLanjutan) {
         let rowspan = 1;
         for (let j = i + 1; j < rows.length; j++) {
@@ -477,7 +475,6 @@ function previewPdf() {
         rowData.push({ content: r.tanggal || '', rowSpan: rowspan });
       }
       
-      // AutoTable mendukung enter (\n) secara bawaan
       rowData.push(r.pukul || '');
       rowData.push(r.uraian || '');
       rowData.push(r.jumlah || '');
@@ -488,7 +485,7 @@ function previewPdf() {
     }
 
     // ==========================================
-    // 4. MENGGAMBAR TABEL UTAMA KE DALAM A4
+    // 4. MENGGAMBAR TABEL (DENGAN LEBAR KOLOM BARU)
     // ==========================================
     doc.autoTable({
       startY: finalY + 8,
@@ -496,30 +493,31 @@ function previewPdf() {
       headStyles: { fillColor: [255, 255, 255], textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
       bodyStyles: { textColor: 0, lineWidth: 0.2, lineColor: 0, halign: 'center', valign: 'middle' },
       styles: { font: "helvetica", fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
-      head: [['NO', 'HARI/TANGGAL', 'PUKUL', 'URAIAN KEGIATAN', 'JUMLAH REALISASI\nBUKTI DUKUNG', 'LINK BUKTI DUKUNG', 'KETERANGAN']],
+      // PERBAIKAN: Menambahkan \n (Enter) manual pada teks header agar rapi
+      head: [['NO', 'HARI/TANGGAL', 'PUKUL', 'URAIAN\nKEGIATAN', 'JUMLAH\nREALISASI\nBUKTI DUKUNG', 'LINK\nBUKTI DUKUNG', 'KETERANGAN']],
       body: tableBody,
+      // PERBAIKAN: Hitungan matematika baru, Total Pas 190mm untuk Kertas A4
       columnStyles: {
         0: { cellWidth: 10 },
-        1: { cellWidth: 25 },
-        2: { cellWidth: 22 },
-        3: { cellWidth: 55, halign: 'center' },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 33 }, // Teks link panjang otomatis turun ke bawah tanpa memotong tabel
-        6: { cellWidth: 25 }
+        1: { cellWidth: 28 }, // Diperlebar agar HARI/TANGGAL tidak terputus
+        2: { cellWidth: 18 }, 
+        3: { cellWidth: 48, halign: 'center' }, 
+        4: { cellWidth: 25 }, // Diperlebar agar REALISASI muat
+        5: { cellWidth: 35 }, 
+        6: { cellWidth: 26 }  // Diperlebar agar KETERANGAN muat utuh
       },
-      margin: { left: 10, right: 10 }, // Lebar akan otomatis presisi di kertas A4 (Margin kiri-kanan mutlak 10mm)
-      rowPageBreak: 'avoid' // KUNCI: Baris tabel tidak akan dipotong di tengah-tengah
+      margin: { left: 10, right: 10 }, 
+      rowPageBreak: 'avoid' 
     });
 
     // ==========================================
-    // 5. MENGGAMBAR TANDA TANGAN (1 PAKET UTUH)
+    // 5. MENGGAMBAR TANDA TANGAN
     // ==========================================
     finalY = doc.lastAutoTable.finalY;
 
-    // Cek jika ruang sisa di bawah kertas kurang dari 50mm, otomatis pindah halaman baru!
     if (finalY > 230) {
         doc.addPage();
-        finalY = 20; // Mulai dari atas di halaman baru
+        finalY = 20; 
     }
 
     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -532,7 +530,6 @@ function previewPdf() {
 
     doc.setFontSize(10);
     
-    // TANDA TANGAN KIRI (ATASAN)
     if (profile.atasanTitle && !profile.jabatan.toLowerCase().includes('sekretaris')) {
         doc.text("Diketahui/Disetujui", 50, finalY + 15, { align: "center" });
         doc.text(profile.atasanTitle, 50, finalY + 20, { align: "center" });
@@ -543,7 +540,6 @@ function previewPdf() {
         doc.text("NIP. " + profile.atasanNip, 50, finalY + 53, { align: "center" });
     }
 
-    // TANDA TANGAN KANAN (PEMBUAT)
     doc.text(dateLabel, 150, finalY + 10, { align: "center" });
     doc.text(profile.jabatan, 150, finalY + 15, { align: "center" });
     if (profile.ttdBase64) {
