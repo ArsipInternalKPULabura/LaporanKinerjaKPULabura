@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { google } from 'googleapis';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
@@ -55,9 +54,10 @@ export default async function handler(req, res) {
         for (let u of allUsers) {
           if (u.sheet_name === aktorLogin) continue;
           let uUnit = (u.unit_kerja || '').toLowerCase();
+          let displayName = u.nama || u.username || u.sheet_name;
           
           if (isSuperAdmin || isSekretaris) {
-            bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
+            bawahanList.push({ sheet: u.sheet_name, name: displayName, role: u.role, unit: u.unit_kerja });
           } else if (isKasubbag) {
             let targetUnit = "";
             if (myJabatan.includes('keuangan') || myJabatan.includes('umum') || myJabatan.includes('logistik')) {
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
             }
 
             if (uUnit.includes(targetUnit) || (targetUnit.includes('keuangan') && uUnit.includes('keuangan umum'))) {
-                bawahanList.push({ sheet: u.sheet_name, name: u.username, role: u.role, unit: u.unit_kerja });
+                bawahanList.push({ sheet: u.sheet_name, name: displayName, role: u.role, unit: u.unit_kerja });
             }
           }
         }
@@ -79,7 +79,6 @@ export default async function handler(req, res) {
       return res.json({ ok: true, bawahan: bawahanList, role: isSuperAdmin ? 'Super Admin' : ((isSekretaris || isKasubbag) ? 'Admin' : 'User') });
     }
 
-    // CEK STATUS UPLOAD BAWAHAN (Mengambil boolean centang dari Users)
     if (action === 'cekStatusLhk') {
         const { listBawahanSheets } = payload;
         if (!listBawahanSheets || listBawahanSheets.length === 0) return res.json({ ok: true, data: {} });
@@ -91,7 +90,6 @@ export default async function handler(req, res) {
         return res.json({ ok: true, data: statusMap });
     }
 
-    // UPDATE STATUS UPLOAD GDRIVE
     if (action === 'updateStatusUpload') {
         const { isUploaded } = payload;
         await supabase.from('users').update({ status_upload: isUploaded }).eq('sheet_name', targetSheet);
@@ -114,18 +112,28 @@ export default async function handler(req, res) {
     if (action === 'saveProfile') {
       const { profile, ttdBase64, ttdAtasanBase64 } = payload;
       let unitKerjaBaru = profile.unitKerja;
-      if(unitKerjaBaru && unitKerjaBaru.includes("Subbagian Keuangan Umum")) unitKerjaBaru = unitKerjaBaru.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
+      if(unitKerjaBaru && unitKerjaBaru.includes("Subbagian Keuangan Umum")) {
+        unitKerjaBaru = unitKerjaBaru.replace("Subbagian Keuangan Umum", "Subbagian Keuangan, Umum dan Logistik");
+      }
 
       let updateData = {
-        nama: profile.nama, nip: profile.nip, atasan_title: profile.atasanTitle, atasan_name: profile.atasanName,
-        atasan_nip: profile.atasanNip, username: profile.username || targetSheet, unit_kerja: unitKerjaBaru, 
-        bulan_laporan: profile.bulanLaporan
+        nama: profile.nama, nip: profile.nip, jabatan: profile.jabatan,
+        atasan_title: profile.atasanTitle, atasan_name: profile.atasanName,
+        atasan_nip: profile.atasanNip, username: profile.username || targetSheet, 
+        unit_kerja: unitKerjaBaru, bulan_laporan: profile.bulanLaporan
       };
       
-      // Jabatan tidak lagi diizinkan diupdate dari form (Readonly)
       if (profile.password) updateData.password = profile.password;
       if (ttdBase64 !== undefined) updateData.ttd_base64 = ttdBase64;
       if (ttdAtasanBase64 !== undefined) updateData.ttd_atasan_base64 = ttdAtasanBase64;
+
+      const { data: currUser } = await supabase.from('users').select('role').eq('sheet_name', targetSheet).single();
+      if (currUser && currUser.role !== 'Super Admin') {
+        const j = String(profile.jabatan || '').toLowerCase();
+        const un = String(profile.username || '').toLowerCase();
+        if (un === 'superadmin') updateData.role = 'Super Admin';
+        else updateData.role = (j.includes('sekretaris') || j.includes('kasubbag')) ? 'Admin' : 'User';
+      }
 
       await supabase.from('users').update(updateData).eq('sheet_name', targetSheet);
       return res.json({ ok: true });
