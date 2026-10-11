@@ -1,11 +1,16 @@
 {
   "name": "REKAP LAPORAN CAPAIAN KINERJA",
-  "short_name": "LKH",
+  "short_name": "LKH KPU",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
   "icons": [
-    { "src": "https://cdn-icons-png.flaticon.com/512/2921/2921222.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }
