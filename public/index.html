@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Aplikasi LHK KPU</title>
+  <meta name="description" content="Sistem Informasi Internal Pencatatan Laporan Kinerja Harian (LKH) Pegawai">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Aplikasi LKH KPU</title>
   <meta name="theme-color" content="#121212">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg">
@@ -13,23 +15,23 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
   <style>
-    :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #3a3a3a; --primary: #3b82f6; --danger: #cf6679; --success: #03dac6; --table-bg: #252525; }
+    :root { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #3a3a3a; --primary: #3b82f6; --danger: #cf6679; --success: #03dac6; --warning: #f59e0b; --table-bg: #252525; }
     * { box-sizing: border-box; } 
     body { margin: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--text); }
     .wrap { max-width: 1200px; margin: auto; padding: 16px; }
     
-    #loginScreen { max-width: 450px; margin: 60px auto; background: var(--card); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    #loginScreen { max-width: 450px; margin: 50px auto; background: var(--card); padding: 36px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
     .login-header { text-align: center; margin-bottom: 25px; }
-    .login-header img { width: 90px; margin-bottom: 12px; }
-    .login-header h2 { margin: 0; font-size: 16px; line-height: 1.4; color: #fff; }
-    .login-notes { margin-top: 20px; font-size: 12px; color: #aaa; background: #2a2a2a; padding: 15px; border-radius: 8px; line-height: 1.6; }
+    .login-header img { width: 85px; margin-bottom: 12px; }
+    .login-header h2 { margin: 0; font-size: 15px; line-height: 1.5; color: #fff; font-weight: 700; }
+    .login-notes { margin-top: 20px; font-size: 12px; color: #aaa; background: #262626; padding: 14px; border-radius: 10px; line-height: 1.6; border: 1px solid #333; }
     
     .top-actions { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 12px; }
     .top-actions button { padding: 6px 12px; font-size: 11px; border-radius: 6px; }
     .hero { background: linear-gradient(135deg, #1f2937, #111827); border-radius: 20px; padding: 25px; border: 1px solid var(--border); text-align: center; }
     h1 { font-size: 26px; margin: 0 0 5px; color: #fff; } 
     .meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; }
-    .meta .item { background: rgba(255,255,255,.05); padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border); min-width: 160px; } 
+    .meta .item { background: rgba(255,255,255,.05); padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border); min-width: 160px; flex: 1; max-width: 280px; } 
     .meta small { display: block; opacity: .7; margin-bottom: 5px; font-size: 11px; text-transform: uppercase; } 
     .meta b { font-size: 14px; color: #fff; display: block; line-height: 1.4; }
     
@@ -37,7 +39,11 @@
     .toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px;}
     button { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; font: inherit; transition: opacity .2s; }
     button:hover { opacity: .85; } 
-    .primary { background: var(--primary); color: #fff; } .secondary { background: #333; color: #fff; border: 1px solid #555; } .danger { background: var(--danger); color: #000; } .success { background: var(--success); color: #000; }
+    .primary { background: var(--primary); color: #fff; } 
+    .secondary { background: #333; color: #fff; border: 1px solid #555; } 
+    .danger { background: var(--danger); color: #000; } 
+    .success { background: var(--success); color: #000; }
+    
     input, textarea, select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font: inherit; background: #2c2c2c; color: #fff; outline: none; }
     input:focus, textarea:focus, select:focus { border-color: var(--primary); }
     .status { font-size: 13px; color: var(--success); margin-top: 10px; font-weight: bold; }
@@ -50,11 +56,15 @@
     #lhkTable th:nth-child(1), #lhkTable td:nth-child(1) { position: sticky; left: 0; z-index: 2; background: #1a1a1a; width: 45px; border-left: 1px solid #555;}
     #lhkTable td:nth-child(1) { background: #1e1e1e; }
     
-    .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } .action-group button { padding: 8px; font-size: 11px; flex: 1; }
+    .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; } 
+    .action-group button { padding: 8px 10px; font-size: 11px; flex: 1; }
     
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; padding: 12px; z-index: 99; } .modal.show { display: flex; }
-    .dialog { background: var(--card); width: min(650px, 100%); max-height: 94vh; overflow: auto; border-radius: 18px; padding: 25px; border: 1px solid var(--border); }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .full { grid-column: 1 / -1; } .field label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #9e9e9e; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; padding: 12px; z-index: 99; } 
+    .modal.show { display: flex; }
+    .dialog { background: var(--card); width: min(650px, 100%); max-height: 94vh; overflow: auto; border-radius: 18px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } 
+    .full { grid-column: 1 / -1; } 
+    .field label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #9e9e9e; }
     #mainScreen { display: none; }
     #pdfFrame { width: 100%; flex: 1; border: none; border-radius: 10px; background: #fff; min-height: 60vh; margin-bottom:15px; }
 
@@ -62,8 +72,13 @@
     #modalForm .field { margin-bottom: 5px; display: flex; flex-direction: column; }
     #modalForm .field label { font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #9e9e9e; }
     #modalForm .field input, #modalForm .field textarea { padding: 10px; border: 1px solid #444; border-radius: 6px; font-size: 14px; }
-    #modalForm .field textarea { resize: vertical; min-height: 80px; }
+    #modalForm .field textarea { resize: vertical; min-height: 80px; text-align: center; }
     #waktuContainer { display: flex; gap: 10px; align-items: center; }
+
+    /* Checkbox Pilihan Copy Kolom */
+    .copy-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .copy-col-item { display: flex; align-items: center; gap: 8px; background: #262626; padding: 10px 12px; border-radius: 8px; border: 1px solid #444; cursor: pointer; font-size: 13px; color: #fff; user-select: none; }
+    .copy-col-item input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); cursor: pointer; }
   </style>
 </head>
 <body>
@@ -74,14 +89,22 @@
     <h2>REKAP LAPORAN CAPAIAN KINERJA<br>APARATUR SIPIL NEGARA (ASN)<br>KPU KABUPATEN LABUHANBATU UTARA</h2>
   </div>
   
-  <div class="grid">
-    <div class="field full"><label>Username / Nama</label><input id="lSheet" placeholder="Contoh: Fredy" onkeypress="if(event.key === 'Enter') doLogin()"></div>
-    <div class="field full"><label>Password</label><input type="password" id="lPass" placeholder="Masukkan password" onkeypress="if(event.key === 'Enter') doLogin()"></div>
-  </div>
-  <button class="primary" style="width:100%;margin-top:20px;padding:14px" onclick="doLogin()">🔒 MASUK</button>
+  <form onsubmit="event.preventDefault(); doLogin();">
+    <div class="grid">
+      <div class="field full">
+        <label for="lSheet">Username / Nama</label>
+        <input id="lSheet" name="username" autocomplete="username" placeholder="Contoh: Fredy" required>
+      </div>
+      <div class="field full">
+        <label for="lPass">Password</label>
+        <input type="password" id="lPass" name="password" autocomplete="current-password" placeholder="Masukkan password" required>
+      </div>
+    </div>
+    <button type="submit" class="primary" style="width:100%;margin-top:20px;padding:14px">🔒 MASUK</button>
+  </form>
   
   <div class="login-notes">
-    <b>Pemberitahuan:</b><br>
+    <b>Panduan Pengguna:</b><br>
     - Masukkan Nama Lengkap Anda.<br>
     - Masukkan Password baru yang akan jadi password Anda.<br>
     - Setelah Login, Masuk Ke Pengaturan untuk buat Username dan ganti password.
@@ -93,9 +116,9 @@
     <h3 style="margin-top:0; color:#fff; font-size:16px;">🛡️ Panel Akses Pimpinan</h3>
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
       <select id="bawahanSelect" style="flex:1; min-width:200px; padding:10px;"><option value="">-- Daftar Bawahan --</option></select>
-      <button class="primary" onclick="lihatLhkBawahan()">👁️ Lihat LHK</button>
+      <button class="primary" onclick="lihatLhkBawahan()">👁️ Lihat LKH</button>
       <button class="success" onclick="cekStatusUpload()">📊 Status Upload GDrive</button>
-      <button class="secondary" onclick="kembaliKeLhkSendiri()">🏠 LHK Saya</button>
+      <button class="secondary" onclick="kembaliKeLhkSendiri()">🏠 LKH Saya</button>
     </div>
   </div>
 
@@ -112,9 +135,8 @@
       <div class="item"><small>Jabatan</small><b id="pJabatan">-</b></div>
       <div class="item"><small>Unit Kerja</small><b id="pUnit">-</b></div>
       <div class="item"><small>Bulan</small><b id="pBulan">-</b></div>
-      <!-- Tombol Status GDrive UI -->
       <div class="item" style="cursor:pointer; background:rgba(0,0,0,0.3); border:1px solid #555;" onclick="bukaModalKonfirmasiGdrive()" title="Konfirmasi Upload Google Drive">
-        <small>Status GDrive</small>
+        <small>Status GDrive LKH</small>
         <b id="pStatusUpload" style="color:var(--danger)">❌ Belum (Klik jika sudah)</b>
       </div>
     </div>
@@ -126,11 +148,7 @@
           <button class="primary" onclick="generateBulan()">📅 Generate Bulan</button> 
           <button class="secondary" onclick="openAdd()">➕ Baris Baru</button>
           
-          <!-- TOMBOL BULK COPY HANYA MUNCUL SAAT MELIHAT LHK BAWAHAN -->
-          <button id="btnBulkCopy" class="success" style="display:none;" onclick="bulkCopySelected()">📥 Copy Terpilih ke LHK Saya</button>
-          
-          <!-- FILTER HALAMAN (Diperbanyak) -->
-          <select id="selBaris" onchange="currentPage=1; renderRowsUI()" style="width:auto; padding:10px; border-radius:8px; margin-left:10px;">
+          <select id="selBaris" onchange="currentPage=1; renderRowsUI()" style="width:auto; padding:10px; border-radius:8px;">
               <option value="0">Tampilkan Semua Data</option>
               <option value="5">5 Kegiatan / Halaman</option>
               <option value="6">6 Kegiatan / Halaman</option>
@@ -161,20 +179,19 @@
             <th width="120">JUMLAH REALISASI<br>BUKTI DUKUNG</th>
             <th width="80">LINK BUKTI DUKUNG</th>
             <th width="100">KETERANGAN</th>
-            <th width="140">AKSI</th>
+            <th width="130">AKSI</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
-    <!-- KONTROL HALAMAN -->
     <div id="paginationCtrl" style="display:flex; justify-content:center; flex-wrap:wrap; gap:5px; margin-top:15px;"></div>
   </section>
 </div>
 
 <!-- Modal Form Edit/Tambah -->
 <div class="modal" id="modalForm"><div class="dialog">
-  <h2 id="modalTitle">Isi Kegiatan</h2>
+  <h2 id="modalTitle" style="margin-top:0;">Isi Kegiatan</h2>
   <input type="hidden" id="arrayIndex"> <input type="hidden" id="insertAfter">
   <div class="grid">
     <div class="field"><label>Nomor (Otomatis)</label><input id="nomor" type="number" readonly style="background:#2a2a2a; color:#888;"></div>
@@ -186,27 +203,25 @@
         <input type="time" id="pukulAwal" style="flex:1;"><span style="color:#fff;"> s/d </span><input type="time" id="pukulAkhir" style="flex:1;">
       </div>
     </div>
-    <div class="field"><label>Jumlah Bukti</label><input id="jumlah" placeholder="1 Kegiatan"></div>
-    <div class="field"><label>Link Bukti (Opsional)</label><input id="link"></div>
+    <div class="field"><label>Jumlah Realisasi Bukti Dukung</label><input id="jumlah" placeholder="1 Kegiatan"></div>
+    <div class="field"><label>Link Bukti Dukung (Opsional)</label><input id="link"></div>
     <div class="field full"><label>Keterangan (Opsional)</label><input id="keterangan" placeholder="-"></div>
-    <div class="field full"><label>Uraian Kegiatan</label><textarea id="uraian" rows="5"></textarea></div>
+    <div class="field full"><label>Uraian Kegiatan</label><textarea id="uraian" rows="5" placeholder="Ketik uraian kegiatan..."></textarea></div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalForm')">Batal</button><button class="primary" onclick="saveRow()">💾 SIMPAN</button></div>
 </div></div>
 
 <!-- Modal Pengaturan -->
 <div class="modal" id="modalSettings"><div class="dialog">
-  <h2>Pengaturan Profil LHK</h2>
+  <h2 style="margin-top:0;">Pengaturan Profil LKH</h2>
   <div class="grid">
     <div class="field full"><label>Bulan Laporan</label><select id="sBulan"></select></div>
     <div class="field"><label>Username (Singkat)</label><input id="sUsername"></div>
     <div class="field"><label>Ganti Password</label><input type="text" id="sPassword" placeholder="Abaikan jika tidak diganti"></div>
     <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px"><label style="color:#fff"><b>DATA PEGAWAI</b></label></div>
-    <div class="field"><label>Nama Lengkap</label><input id="sNama"></div><div class="field"><label>NIP Pegawai</label><input id="sNip"></div>
-    
-    <!-- JABATAN DIBUKA KUNCINYA AGAR BISA DIEDIT -->
-    <div class="field"><label>Jabatan (Isi Kasubbag/Sekretaris untuk akses pimpinan)</label><input id="sJabatan"></div>
-    
+    <div class="field"><label>Nama Lengkap</label><input id="sNama"></div>
+    <div class="field"><label>NIP Pegawai</label><input id="sNip"></div>
+    <div class="field"><label>Jabatan</label><input id="sJabatan" placeholder="Contoh: Penata Kelola Sistem dan TI"></div>
     <div class="field"><label>Unit Kerja</label>
       <select id="sUnit">
         <option value="">-- Pilih Unit Kerja --</option>
@@ -222,47 +237,57 @@
       <select id="sPilihAtasan" onchange="pilihAtasan()"><option value="">-- Sedang memuat atasan... --</option></select>
     </div>
     <div class="field full"><label>Jabatan Atasan</label><input id="sAtasanTitle" readonly style="background:#2a2a2a; color:#888;"></div>
-    <!-- NAMA DAN NIP ATASAN DIKUNCI READONLY -->
     <div class="field"><label>Nama Atasan</label><input id="sAtasanName" readonly style="background:#2a2a2a; color:#888;"></div>
     <div class="field"><label>NIP Atasan</label><input id="sAtasanNip" readonly style="background:#2a2a2a; color:#888;"></div>
     
     <div class="field"><label style="color:var(--primary)">TTD Atasan (Kiri) <small id="infoTtdAtasan"></small></label><input type="file" id="sTtdAtasanFile" accept="image/png, image/jpeg" style="padding:8px"></div>
     <div class="field"><label style="color:var(--success)">TTD Anda (Kanan)</label><input type="file" id="sTtdFile" accept="image/png, image/jpeg" style="padding:8px"></div>
-    
-    <!-- FITUR NOTIFIKASI RAPI -->
-    <div class="field full" style="margin-top:10px;border-top:1px solid #444;padding-top:15px">
-      <label style="color:var(--success); font-size:14px; margin-bottom:10px;"><b>🔔 PENGINGAT LHK (NOTIFIKASI)</b></label>
-      <div style="background:#2a2a2a; padding:15px; border-radius:8px;">
-        <label style="display:block; margin-bottom:10px; color:#aaa; font-size:12px;">Pilih Hari Pengingat:</label>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap:8px; margin-bottom:15px;">
-          <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="1" class="cb-hari"> Sen</label>
-          <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="2" class="cb-hari"> Sel</label>
-          <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="3" class="cb-hari"> Rab</label>
-          <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="4" class="cb-hari"> Kam</label>
-          <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="5" class="cb-hari"> Jum</label>
-          <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="6" class="cb-hari"> Sab</label>
-          <label style="background:#333; padding:10px; border-radius:6px; cursor:pointer; text-align:center; font-size:13px; color:#fff;"><input type="checkbox" value="0" class="cb-hari"> Min</label>
-        </div>
-        <label style="display:block; margin-bottom:10px; color:#aaa; font-size:12px;">Atur Jam & Beri Akses:</label>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <input type="time" id="jamNotif" style="flex:1; min-width:130px; padding:12px;">
-          <button class="primary" onclick="aktifkanNotif()" style="flex:1; min-width:150px; padding:12px; font-size:13px;">Aktifkan Akses Browser</button>
-        </div>
-        <!-- TOMBOL TEST NOTIFIKASI -->
-        <button class="secondary" onclick="testNotif()" style="width:100%; margin-top:10px; padding:10px; font-size:12px;">🔔 Test Notifikasi Sekarang</button>
-        <small style="display:block; margin-top:8px; color:#888;">*Catatan: Tab web ini harus dalam keadaan terbuka (boleh di-minimize) agar alarm notifikasi bisa berbunyi tepat waktu.</small>
-      </div>
-    </div>
-
   </div>
   <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalSettings')">Batal</button><button class="primary" onclick="saveSettings()">💾 SIMPAN PENGATURAN</button></div>
 </div></div>
+
+<!-- Modal Copy Kegiatan Bawahan ke LKH Atasan -->
+<div class="modal" id="modalCopyLkh">
+  <div class="dialog" style="max-width: 520px;">
+    <h2 style="margin-top:0; color:var(--primary);">📥 Copy Kegiatan ke LKH Saya</h2>
+    <p id="copySourceInfo" style="color:#bbb; font-size:13px; margin-top:-5px; margin-bottom:15px;"></p>
+
+    <div class="field" style="margin-bottom:18px;">
+      <label style="color:#fff;">Pilih Nomor Tujuan di Tabel LKH Anda:</label>
+      <select id="copyTargetSelect"></select>
+      <small style="color:#888; display:block; margin-top:6px;">*Nomor urut asli pada tabel LKH Anda tetap utuh dan tidak akan berubah.</small>
+    </div>
+
+    <div class="field">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label style="color:#fff; margin:0;">Pilih Kolom yang Ingin Di-copy:</label>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="secondary" style="padding:4px 8px; font-size:11px;" onclick="toggleAllCopyCols(true)">Pilih Semua</button>
+          <button type="button" class="secondary" style="padding:4px 8px; font-size:11px;" onclick="toggleAllCopyCols(false)">Reset</button>
+        </div>
+      </div>
+      <div class="copy-col-grid">
+        <label class="copy-col-item"><input type="checkbox" id="chkCopyTanggal" checked> HARI / TANGGAL</label>
+        <label class="copy-col-item"><input type="checkbox" id="chkCopyPukul" checked> PUKUL</label>
+        <label class="copy-col-item"><input type="checkbox" id="chkCopyUraian" checked> URAIAN KEGIATAN</label>
+        <label class="copy-col-item"><input type="checkbox" id="chkCopyJumlah" checked> JUMLAH REALISASI BUKTI DUKUNG</label>
+        <label class="copy-col-item"><input type="checkbox" id="chkCopyLink" checked> LINK BUKTI DUKUNG</label>
+        <label class="copy-col-item"><input type="checkbox" id="chkCopyKeterangan" checked> KETERANGAN</label>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
+      <button class="secondary" onclick="closeModal('modalCopyLkh')">Batal</button>
+      <button class="success" onclick="eksekusiCopyKeLkhSaya()">📥 Copy Sekarang</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal PDF & Upload -->
 <div class="modal" id="modalPdf">
   <div class="dialog" style="width: 95%; height: 95vh; max-width: 1000px; display:flex; flex-direction:column;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h2 style="margin:0">Preview LHK</h2><button class="danger" onclick="closeModal('modalPdf')">✖ Tutup</button>
+      <h2 style="margin:0">Preview LKH</h2><button class="danger" onclick="closeModal('modalPdf')">✖ Tutup</button>
     </div>
     <iframe id="pdfFrame"></iframe>
     <div style="display:flex; gap:10px; margin-top:10px;">
@@ -275,8 +300,8 @@
 <!-- POP-UP CUSTOM: Konfirmasi Status GDrive -->
 <div class="modal" id="modalStatusGdrive">
   <div class="dialog" style="max-width: 450px; text-align:center; padding:35px 25px;">
-    <h2 style="margin-top:0; color:var(--primary); font-size:22px;">Konfirmasi GDrive</h2>
-    <p style="color:#ccc; font-size:15px; line-height:1.6; margin-bottom:25px;">Apakah Anda <b>sudah selesai</b> mengunggah file LHK Anda ke dalam folder Google Drive KPU bulan ini?</p>
+    <h2 style="margin-top:0; color:var(--primary); font-size:22px;">Konfirmasi Upload GDrive</h2>
+    <p style="color:#ccc; font-size:15px; line-height:1.6; margin-bottom:25px;">Apakah Anda <b>sudah selesai</b> mengunggah file LKH Anda ke dalam folder Google Drive KPU bulan ini?</p>
     <div style="display:flex; gap:10px; justify-content:center;">
       <button class="danger" style="flex:1; padding:14px;" onclick="setGdriveStatus(false)">Belum Upload</button>
       <button class="success" style="flex:1; padding:14px;" onclick="setGdriveStatus(true)">✅ Sudah Selesai</button>
@@ -303,14 +328,48 @@
   </div>
 </div>
 
+<!-- POP-UP CUSTOM: Universal Alert & Confirm UI -->
+<div class="modal" id="modalUiDialog" style="z-index: 120;">
+  <div class="dialog" style="max-width: 420px; text-align:center; padding: 30px 24px;">
+    <h3 id="uiDialogTitle" style="margin-top:0; color:#fff; font-size:19px;">Informasi</h3>
+    <p id="uiDialogMessage" style="color:#ccc; font-size:14px; line-height:1.6; margin-bottom:25px; white-space:pre-line;"></p>
+    <div id="uiDialogActions" style="display:flex; gap:10px; justify-content:center;"></div>
+  </div>
+</div>
+
 <script>
 if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err)); }
 
 let cred={loginId:'', password:'', sheetName:''}, profile={}, rows=[], ttdB64=null, ttdAtasanB64=null;
 let base64PdfUtama = null, targetSheetView = null; 
 let listAtasanDB = [], listBawahanSheets = []; 
-let notifInterval;
 let currentPage = 1; 
+let copySourceRowIdx = null;
+let cachedMyRowsForCopy = [];
+
+// FUNGSI POP-UP UI KUSTOM (Menggantikan alert & confirm bawaan browser)
+function showUiAlert(message, title = "Pemberitahuan") {
+  document.getElementById('uiDialogTitle').textContent = title;
+  document.getElementById('uiDialogMessage').textContent = message;
+  document.getElementById('uiDialogActions').innerHTML = `
+    <button class="primary" style="min-width:120px; padding:12px 20px;" onclick="closeModal('modalUiDialog')">OK</button>
+  `;
+  document.getElementById('modalUiDialog').classList.add('show');
+}
+
+function showUiConfirm(message, onConfirm, title = "Konfirmasi") {
+  document.getElementById('uiDialogTitle').textContent = title;
+  document.getElementById('uiDialogMessage').textContent = message;
+  document.getElementById('uiDialogActions').innerHTML = `
+    <button class="secondary" style="flex:1; padding:12px;" onclick="closeModal('modalUiDialog')">Batal</button>
+    <button class="primary" id="btnUiConfirmYes" style="flex:1; padding:12px;">Ya, Lanjutkan</button>
+  `;
+  document.getElementById('btnUiConfirmYes').onclick = () => {
+    closeModal('modalUiDialog');
+    if (typeof onConfirm === 'function') onConfirm();
+  };
+  document.getElementById('modalUiDialog').classList.add('show');
+}
 
 function formatTanggalLengkap(tglStr) {
   if (!tglStr) return '';
@@ -347,19 +406,21 @@ async function callApi(action, payload={}) {
 }
 
 function doLogin() {
-  cred.loginId = document.getElementById('lSheet').value; cred.password = document.getElementById('lPass').value;
-  if(!cred.loginId || !cred.password) return alert("Wajib diisi!");
+  cred.loginId = document.getElementById('lSheet').value.trim(); 
+  cred.password = document.getElementById('lPass').value;
+  if(!cred.loginId || !cred.password) return showUiAlert("Username dan Password wajib diisi!", "Login Gagal");
   callApi('login').then((res) => {
     cred.sheetName = res.sheetName; 
-    document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainScreen').style.display = 'block'; 
-    loadData(); cekNotifikasi(); 
-  }).catch(e => { alert(e); });
+    document.getElementById('loginScreen').style.display = 'none'; 
+    document.getElementById('mainScreen').style.display = 'block'; 
+    loadData();
+  }).catch(e => { showUiAlert(e.message || String(e), "Login Gagal"); });
 }
 
 function doLogout() {
   cred = {loginId:'', password:'', sheetName:''}; targetSheetView = null;
-  document.getElementById('mainScreen').style.display = 'none'; document.getElementById('loginScreen').style.display = 'block';
-  if(notifInterval) clearInterval(notifInterval);
+  document.getElementById('mainScreen').style.display = 'none'; 
+  document.getElementById('loginScreen').style.display = 'block';
 }
 
 function loadData() {
@@ -376,11 +437,12 @@ function loadData() {
     
     updateUIGdriveHero(); 
     
-    if(!targetSheetView) { cekAdminBawahan(); document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri"; } 
-    else { document.getElementById('pModeTampilan').textContent = `Melihat LHK: ${profile.username}`; }
-    
-    // Tampilkan/Sembunyikan tombol Bulk Copy jika Atasan sedang memantau
-    document.getElementById('btnBulkCopy').style.display = (targetSheetView !== null) ? 'inline-block' : 'none';
+    if(!targetSheetView) { 
+      cekAdminBawahan(); 
+      document.getElementById('pModeTampilan').textContent = "Data Anda Sendiri"; 
+    } else { 
+      document.getElementById('pModeTampilan').textContent = `Melihat LKH: ${profile.nama || profile.username}`; 
+    }
     
     renderRowsUI(); setMsg("Data termuat.");
   }).catch(e => setMsg("Error: "+e, "red"));
@@ -398,7 +460,7 @@ function updateUIGdriveHero() {
 }
 
 function bukaModalKonfirmasiGdrive() {
-    if(targetSheetView) return alert("Anda hanya bisa mengubah status LHK Anda sendiri.");
+    if(targetSheetView) return showUiAlert("Anda hanya bisa mengubah status LKH Anda sendiri.");
     document.getElementById('modalStatusGdrive').classList.add('show');
 }
 
@@ -409,45 +471,61 @@ function setGdriveStatus(isSelesai) {
         updateUIGdriveHero();
         closeModal('modalStatusGdrive');
         setMsg("Status GDrive diperbarui.", "var(--success)");
-    }).catch(e => alert("Gagal update: " + e));
+    }).catch(e => showUiAlert("Gagal memperbarui status: " + e, "Error"));
 }
 
 function cekAdminBawahan() {
   callApi('getBawahan').then(d => {
     if (d.role === 'Super Admin' || d.role === 'Admin') {
-      const panel = document.getElementById('adminPanel'); const sel = document.getElementById('bawahanSelect');
+      const panel = document.getElementById('adminPanel'); 
+      const sel = document.getElementById('bawahanSelect');
       if (d.bawahan && d.bawahan.length > 0) {
-        panel.style.display = 'block'; listBawahanSheets = d.bawahan.map(b => b.sheet); 
-        sel.innerHTML = '<option value="">-- Pilih LHK Bawahan --</option>' + d.bawahan.map(b => `<option value="${b.sheet}">${b.name} (${b.unit || b.role})</option>`).join('');
+        panel.style.display = 'block'; 
+        listBawahanSheets = d.bawahan.map(b => b.sheet); 
+        // HANYA MENAMPILKAN NAMA TANPA SUBBAGIAN DALAM KURUNG
+        sel.innerHTML = '<option value="">-- Pilih LKH Bawahan --</option>' + d.bawahan.map(b => `<option value="${b.sheet}">${b.name}</option>`).join('');
       }
     }
   });
 }
 
-function lihatLhkBawahan() { const sel = document.getElementById('bawahanSelect').value; if (!sel) return alert("Pilih bawahan!"); targetSheetView = sel; loadData(); }
-function kembaliKeLhkSendiri() { targetSheetView = null; loadData(); }
+function lihatLhkBawahan() { 
+  const sel = document.getElementById('bawahanSelect').value; 
+  if (!sel) return showUiAlert("Silakan pilih nama bawahan terlebih dahulu!"); 
+  targetSheetView = sel; 
+  currentPage = 1;
+  loadData(); 
+}
+
+function kembaliKeLhkSendiri() { 
+  targetSheetView = null; 
+  currentPage = 1;
+  loadData(); 
+}
 
 async function cekStatusUpload() {
     setMsg("Memuat status bawahan...", "var(--warning)");
-    if(listBawahanSheets.length === 0) return alert("Belum ada bawahan.");
+    if(listBawahanSheets.length === 0) return showUiAlert("Belum ada daftar bawahan.");
     try {
         const res = await callApi('cekStatusLhk', { listBawahanSheets });
         const tbody = document.getElementById('statusTbody'); let html = '';
         const selectBox = document.getElementById('bawahanSelect');
         
         for (let i = 1; i < selectBox.options.length; i++) {
-            const sheet = selectBox.options[i].value; const nama = selectBox.options[i].text.split('(')[0].trim();
+            const sheet = selectBox.options[i].value; 
+            const nama = selectBox.options[i].text.trim();
             const isUploaded = res.data[sheet];
             const statusHtml = isUploaded ? `<b style="color:var(--success)">✅ Sudah Upload</b>` : `<b style="color:var(--danger)">❌ Belum Upload</b>`;
             html += `<tr><td style="padding:10px; border:1px solid #555; text-align:left;">${nama}</td><td style="padding:10px; border:1px solid #555;">${statusHtml}</td></tr>`;
         }
-        tbody.innerHTML = html; document.getElementById('modalStatus').classList.add('show'); setMsg("Status siap.", "var(--success)");
-    } catch(e) { alert("Gagal mengambil status: " + e); }
+        tbody.innerHTML = html; 
+        document.getElementById('modalStatus').classList.add('show'); 
+        setMsg("Status siap.", "var(--success)");
+    } catch(e) { showUiAlert("Gagal mengambil status: " + e, "Error"); }
 }
 
 function goToPage(p) { currentPage = p; renderRowsUI(); }
 
-// LOGIKA PAGINATION PINTAR & TOMBOL COPY UNTUK ATASAN
 function renderRowsUI() {
   const tb = document.getElementById('tbody');
   const pgCtrl = document.getElementById('paginationCtrl');
@@ -481,22 +559,19 @@ function renderRowsUI() {
   displayGroups.forEach(g => {
       let rowspan = 1 + g.children.length;
       
-      // Aksi Khusus Parent
+      // Tombol Aksi (Tanpa Checkbox Pilih)
       let parentAksi = '';
       if(isViewingBawahan) {
-          parentAksi = `<div class="action-group" style="flex-direction:column; gap:5px;">
-              <button class="success" onclick="copyToMyLhk([${g.index}])" title="Copy ke LHK Saya">📥 Copy</button>
-              <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="cb-copy-row" value="${g.index}"> Pilih</label>
-          </div>`;
+          parentAksi = `<div class="action-group"><button class="success" onclick="openCopyModal(${g.index})">📥 Copy</button></div>`;
       } else {
           parentAksi = `<div class="action-group"><button class="secondary" onclick="openEdit(${g.index})">✏️</button><button class="primary" onclick="addLanjutan(${g.index})">➕</button><button class="danger" onclick="hapusRow(${g.index})">🗑️</button></div>`;
       }
 
       html += `<tr>
         <td rowspan="${rowspan}">${g.parent.nomor||''}</td>
-        <td rowspan="${rowspan}" style="font-weight:bold; text-align:left;">${formatTanggalLengkap(g.parent.tanggal)}</td>
+        <td rowspan="${rowspan}" style="font-weight:bold; text-align:center;">${formatTanggalLengkap(g.parent.tanggal)}</td>
         <td>${g.parent.pukul||''}</td>
-        <td style="text-align:left;">${(g.parent.uraian||'').replace(/\n/g,'<br>')}</td>
+        <td style="text-align:center;">${(g.parent.uraian||'').replace(/\n/g,'<br>')}</td>
         <td>${g.parent.jumlah||''}</td>
         <td>${g.parent.link?'<a href="'+g.parent.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
         <td>${g.parent.keterangan||''}</td>
@@ -504,20 +579,16 @@ function renderRowsUI() {
       </tr>`;
       
       g.children.forEach(c => {
-         // Aksi Khusus Child
          let childAksi = '';
          if(isViewingBawahan) {
-             childAksi = `<div class="action-group" style="flex-direction:column; gap:5px;">
-                 <button class="success" onclick="copyToMyLhk([${c.index}])" title="Copy ke LHK Saya">📥 Copy</button>
-                 <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="cb-copy-row" value="${c.index}"> Pilih</label>
-             </div>`;
+             childAksi = `<div class="action-group"><button class="success" onclick="openCopyModal(${c.index})">📥 Copy</button></div>`;
          } else {
              childAksi = `<div class="action-group"><button class="secondary" onclick="openEdit(${c.index})">✏️</button><button class="primary" onclick="addLanjutan(${c.index})">➕</button><button class="danger" onclick="hapusRow(${c.index})">🗑️</button></div>`;
          }
           
          html += `<tr>
             <td>${c.pukul||''}</td>
-            <td style="text-align:left;">${(c.uraian||'').replace(/\n/g,'<br>')}</td>
+            <td style="text-align:center;">${(c.uraian||'').replace(/\n/g,'<br>')}</td>
             <td>${c.jumlah||''}</td>
             <td>${c.link?'<a href="'+c.link+'" target="_blank" style="color:var(--primary);">Buka</a>':''}</td>
             <td>${c.keterangan||''}</td>
@@ -536,83 +607,125 @@ function renderRowsUI() {
   } else { pgCtrl.innerHTML = ''; }
 }
 
-// LOGIKA EKSPOR (COPY) DATA LHK BAWAHAN KE LHK ATASAN
-function bulkCopySelected() {
-    let selected = Array.from(document.querySelectorAll('.cb-copy-row:checked')).map(cb => parseInt(cb.value));
-    if(selected.length === 0) return alert("Centang minimal satu baris yang ingin di-copy.");
-    copyToMyLhk(selected);
+// FITUR MODAL COPY PARSIAL KE NOMOR PILIHAN ATASAN
+function toggleAllCopyCols(status) {
+  ['chkCopyTanggal','chkCopyPukul','chkCopyUraian','chkCopyJumlah','chkCopyLink','chkCopyKeterangan'].forEach(id => {
+    document.getElementById(id).checked = status;
+  });
 }
 
-async function copyToMyLhk(indices) {
-    if(!indices || indices.length === 0) return;
-    
-    let targetNo = prompt(`Menyalin ${indices.length} baris kegiatan ke tabel LHK Anda.\n\nMasukkan Nomor Urut Tujuan (misal: 1):\n(Biarkan KOSONG jika ingin menyimpan ke baris paling bawah)`);
-    if (targetNo === null) return; 
+async function openCopyModal(rowIndex) {
+  copySourceRowIdx = rowIndex;
+  const r = rows[rowIndex];
 
-    setMsg("Menyalin ke LHK Anda...", "var(--warning)");
-    try {
-        // Ambil Data LHK Atasan dari Database
-        const res = await fetch('/api', {
-           method: 'POST', headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ action: 'initial', loginId: cred.loginId, password: cred.password, aktorLogin: cred.sheetName, targetSheet: cred.sheetName })
-        });
-        const data = await res.json();
-        let myRows = data.rows || [];
-
-        // Siapkan baris yang mau diinsert
-        let itemsToInsert = [];
-        for(let idx of indices) {
-            let r = rows[idx];
-            let copyTanggal = r.tanggal;
-            // Cari tanggal induk jika ini anak baris (lanjutan)
-            if(!copyTanggal) {
-                for(let i=idx; i>=0; i--) {
-                    if(rows[i].tanggal) { copyTanggal = rows[i].tanggal; break; }
-                }
-            }
-            itemsToInsert.push({
-                nomor: '', 
-                tanggal: copyTanggal,
-                pukul: r.pukul,
-                uraian: r.uraian,
-                jumlah: r.jumlah,
-                link: r.link,
-                keterangan: r.keterangan
-            });
-        }
-
-        // Tentukan Posisi Nomor
-        if(targetNo) {
-            itemsToInsert[0].nomor = targetNo; // Beri nomor pada baris pertama saja
-            let insertPos = myRows.findIndex(r => String(r.nomor) === String(targetNo));
-            if(insertPos !== -1) {
-                // Taruh di bawah anak-anaknya dari nomor tersebut
-                insertPos++;
-                while(insertPos < myRows.length && !myRows[insertPos].nomor && !myRows[insertPos].tanggal) { insertPos++; }
-                myRows.splice(insertPos, 0, ...itemsToInsert);
-            } else { myRows.push(...itemsToInsert); }
-        } else {
-            // Taruh di paling bawah otomatis
-            let maxNum = myRows.length > 0 ? Math.max(...myRows.filter(r=>r.nomor).map(r=>Number(r.nomor)||0)) : 0;
-            itemsToInsert[0].nomor = maxNum + 1;
-            myRows.push(...itemsToInsert);
-        }
-
-        // Simpan langsung ke database Atasan
-        await fetch('/api', {
-           method: 'POST', headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ action: 'syncRows', loginId: cred.loginId, password: cred.password, aktorLogin: cred.sheetName, targetSheet: cred.sheetName, rows: myRows })
-        });
-        
-        alert(`Berhasil! ${indices.length} kegiatan telah di-copy ke LHK Anda.`);
-        setMsg("Data berhasil disalin.", "var(--success)");
-        document.querySelectorAll('.cb-copy-row').forEach(cb => cb.checked = false); // Hapus centang
-    } catch(e) {
-        alert("Gagal mengcopy: " + e);
-        setMsg("Gagal copy.", "var(--danger)");
+  // Cari nomor dan tanggal induk jika yang diklik adalah baris lanjutan
+  let sourceNo = r.nomor;
+  let sourceTgl = r.tanggal;
+  if (!sourceNo && !sourceTgl) {
+    for (let i = rowIndex; i >= 0; i--) {
+      if (rows[i].nomor || rows[i].tanggal) {
+        sourceNo = rows[i].nomor;
+        sourceTgl = rows[i].tanggal;
+        break;
+      }
     }
+  }
+
+  document.getElementById('copySourceInfo').textContent = `Sumber Bawahan: No. ${sourceNo || '-'} (${formatTanggalLengkap(sourceTgl) || '-'})`;
+  toggleAllCopyCols(true);
+
+  setMsg("Memuat daftar nomor LKH Anda...", "var(--warning)");
+  try {
+    const res = await fetch('/api', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'initial', loginId: cred.loginId, password: cred.password, aktorLogin: cred.sheetName, targetSheet: cred.sheetName })
+    });
+    const data = await res.json();
+    cachedMyRowsForCopy = data.rows || [];
+
+    const sel = document.getElementById('copyTargetSelect');
+    let optHtml = '';
+    cachedMyRowsForCopy.forEach((mr, idx) => {
+      if (mr.nomor || mr.tanggal) {
+        optHtml += `<option value="${idx}">Copy ke No. ${mr.nomor || '-'} (${formatTanggalLengkap(mr.tanggal) || 'Tanpa Tanggal'})</option>`;
+      }
+    });
+    optHtml += `<option value="NEW">➕ Buat sebagai Nomor Baru di Baris Paling Bawah</option>`;
+    sel.innerHTML = optHtml;
+
+    setMsg("Data siap.", "var(--success)");
+    document.getElementById('modalCopyLkh').classList.add('show');
+  } catch (e) {
+    showUiAlert("Gagal memuat tabel LKH Anda: " + e, "Error");
+  }
 }
 
+async function eksekusiCopyKeLkhSaya() {
+  const cTgl = document.getElementById('chkCopyTanggal').checked;
+  const cPukul = document.getElementById('chkCopyPukul').checked;
+  const cUraian = document.getElementById('chkCopyUraian').checked;
+  const cJumlah = document.getElementById('chkCopyJumlah').checked;
+  const cLink = document.getElementById('chkCopyLink').checked;
+  const cKet = document.getElementById('chkCopyKeterangan').checked;
+
+  if (!cTgl && !cPukul && !cUraian && !cJumlah && !cLink && !cKet) {
+    return showUiAlert("Pilih minimal satu kolom yang ingin di-copy!");
+  }
+
+  const targetVal = document.getElementById('copyTargetSelect').value;
+  const srcRow = rows[copySourceRowIdx];
+
+  // Ambil tanggal induk jika baris sumber adalah lanjutan
+  let srcTanggal = srcRow.tanggal;
+  if (!srcTanggal) {
+    for (let i = copySourceRowIdx; i >= 0; i--) {
+      if (rows[i].tanggal) { srcTanggal = rows[i].tanggal; break; }
+    }
+  }
+
+  closeModal('modalCopyLkh');
+  setMsg("Menyalin ke LKH Anda...", "var(--warning)");
+
+  try {
+    let myRows = [...cachedMyRowsForCopy];
+
+    if (targetVal === 'NEW') {
+      let maxNum = 0;
+      myRows.forEach(r => { if (r.nomor && !isNaN(r.nomor)) maxNum = Math.max(maxNum, Number(r.nomor)); });
+      myRows.push({
+        nomor: String(maxNum + 1),
+        tanggal: cTgl ? formatTanggalLengkap(srcTanggal) : '',
+        pukul: cPukul ? (srcRow.pukul || '') : '',
+        uraian: cUraian ? (srcRow.uraian || '') : '',
+        jumlah: cJumlah ? (srcRow.jumlah || '') : '',
+        link: cLink ? (srcRow.link || '') : '',
+        keterangan: cKet ? (srcRow.keterangan || '') : ''
+      });
+    } else {
+      const targetIdx = parseInt(targetVal);
+      if (myRows[targetIdx]) {
+        // NOMOR ATASAN TETAP UTUH, HANYA KOLOM YANG DICENTANG YANG TER-COPY
+        if (cTgl) myRows[targetIdx].tanggal = formatTanggalLengkap(srcTanggal);
+        if (cPukul) myRows[targetIdx].pukul = srcRow.pukul || '';
+        if (cUraian) myRows[targetIdx].uraian = srcRow.uraian || '';
+        if (cJumlah) myRows[targetIdx].jumlah = srcRow.jumlah || '';
+        if (cLink) myRows[targetIdx].link = srcRow.link || '';
+        if (cKet) myRows[targetIdx].keterangan = srcRow.keterangan || '';
+      }
+    }
+
+    await fetch('/api', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'syncRows', loginId: cred.loginId, password: cred.password, aktorLogin: cred.sheetName, targetSheet: cred.sheetName, rows: myRows })
+    });
+
+    setMsg("Data berhasil disalin ke LKH Anda.", "var(--success)");
+    showUiAlert("Kegiatan terpilih berhasil disalin ke tabel LKH Anda tanpa mengubah nomor urut asli Anda.", "Copy Berhasil");
+  } catch (e) {
+    showUiAlert("Gagal menyalin data: " + e, "Error");
+    setMsg("Gagal copy.", "var(--danger)");
+  }
+}
 
 function formatTanggalIndo() {
   const dRaw = document.getElementById('tanggalRaw').value; if(!dRaw) return;
@@ -634,14 +747,6 @@ async function openSettings() {
   document.getElementById('sAtasanName').value = profile.atasanName || ''; 
   document.getElementById('sAtasanNip').value = profile.atasanNip || ''; 
   ttdB64 = profile.ttdBase64 || null; ttdAtasanB64 = profile.ttdAtasanBase64 || null;
-
-  try {
-    const conf = JSON.parse(localStorage.getItem('lhkNotifConfig'));
-    if(conf) {
-      document.getElementById('jamNotif').value = conf.time || '';
-      document.querySelectorAll('.cb-hari').forEach(cb => { cb.checked = conf.days.includes(parseInt(cb.value)); });
-    }
-  } catch(e) {}
 
   try {
     const res = await callApi('getAtasanList');
@@ -675,74 +780,55 @@ document.getElementById('sTtdAtasanFile').addEventListener('change', e => { cons
 
 function saveSettings() {
   setMsg("Menyimpan profil...", "white"); closeModal('modalSettings');
-  const p = { username: document.getElementById('sUsername').value, password: document.getElementById('sPassword').value, bulanLaporan: document.getElementById('sBulan').value, nama: document.getElementById('sNama').value, nip: document.getElementById('sNip').value, jabatan: document.getElementById('sJabatan').value, unitKerja: document.getElementById('sUnit').value, atasanTitle: document.getElementById('sAtasanTitle').value, atasanName: document.getElementById('sAtasanName').value, atasanNip: document.getElementById('sAtasanNip').value };
+  const p = { 
+    username: document.getElementById('sUsername').value, 
+    password: document.getElementById('sPassword').value, 
+    bulanLaporan: document.getElementById('sBulan').value, 
+    nama: document.getElementById('sNama').value, 
+    nip: document.getElementById('sNip').value, 
+    jabatan: document.getElementById('sJabatan').value, 
+    unitKerja: document.getElementById('sUnit').value, 
+    atasanTitle: document.getElementById('sAtasanTitle').value, 
+    atasanName: document.getElementById('sAtasanName').value, 
+    atasanNip: document.getElementById('sAtasanNip').value 
+  };
   
-  if(p.username) cred.loginId = p.username; if(p.password) cred.password = p.password;
+  if(p.username) cred.loginId = p.username; 
+  if(p.password) cred.password = p.password;
   
-  const selectedDays = Array.from(document.querySelectorAll('.cb-hari:checked')).map(cb => parseInt(cb.value));
-  const jamVal = document.getElementById('jamNotif').value;
-  if(jamVal && selectedDays.length > 0) {
-     localStorage.setItem('lhkNotifConfig', JSON.stringify({ days: selectedDays, time: jamVal }));
-     cekNotifikasi();
-  } else { localStorage.removeItem('lhkNotifConfig'); }
-  
-  callApi('saveProfile', { profile: p, ttdBase64: ttdB64, ttdAtasanBase64: ttdAtasanB64 }).then(loadData).catch(e => alert(e));
-}
-
-// FITUR NOTIFIKASI DINAMIS
-function aktifkanNotif() {
-  if (!("Notification" in window)) { alert("Browser ini tidak mendukung notifikasi."); return; }
-  Notification.requestPermission().then(permission => {
-    if (permission === "granted") alert("Izin diberikan! Pastikan Anda mencentang Hari dan mengatur Jam, lalu klik Simpan.");
-    else alert("Izin notifikasi ditolak.");
-  });
-}
-function testNotif() {
-  if (!("Notification" in window) || Notification.permission !== "granted") {
-      alert("Browser menolak notifikasi. Pastikan Anda telah mengklik 'Aktifkan Akses Browser' dan memberikan Izin (Allow) di pengaturan browser Anda."); return;
-  }
-  new Notification("LHK KPU - Test Berhasil!", { body: "Notifikasi Anda berjalan dengan baik di perangkat ini.", icon: "https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg" });
-}
-function cekNotifikasi() {
-  if(notifInterval) clearInterval(notifInterval);
-  notifInterval = setInterval(() => {
-    try {
-        const conf = JSON.parse(localStorage.getItem('lhkNotifConfig'));
-        if(!conf || Notification.permission !== "granted") return;
-        const now = new Date();
-        const currTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-        
-        if(conf.days.includes(now.getDay()) && currTime === conf.time && now.getSeconds() === 0) { 
-          new Notification("LHK KPU - Pengingat", { body: "Jangan lupa mengisi LHK dan Upload ke GDrive hari ini!", icon: "https://upload.wikimedia.org/wikipedia/commons/4/46/KPU_Logo.svg" });
-        }
-    } catch(e){}
-  }, 1000); 
+  callApi('saveProfile', { profile: p, ttdBase64: ttdB64, ttdAtasanBase64: ttdAtasanB64 })
+    .then(() => { loadData(); showUiAlert("Pengaturan profil berhasil disimpan.", "Berhasil"); })
+    .catch(e => showUiAlert("Gagal menyimpan pengaturan: " + e, "Error"));
 }
 
 function generateBulan() {
-  if(!confirm("Buat baris otomatis bulan ini? (Data lama akan dihapus)")) return;
-  const bulanStr = profile.bulanLaporan || 'Oktober 2026';
-  const names = ['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
-  let m = 9, y = 2026;
-  for(let i=0; i<names.length; i++) { if(bulanStr.toLowerCase().includes(names[i])) { m = i; break; } }
-  const match = bulanStr.match(/\b20\d{2}\b/); if(match) y = Number(match[0]);
-  
-  const days = new Date(y, m+1, 0).getDate(); const newRows = []; let no = 1;
-  for(let d = 1; d <= days; d++) {
-      const date = new Date(y, m, d);
-      if(date.getDay() !== 0 && date.getDay() !== 6) {
-          const tglStrRaw = `${d} ${names[m].charAt(0).toUpperCase() + names[m].slice(1)} ${y}`;
-          newRows.push({ nomor: no++, tanggal: formatTanggalLengkap(tglStrRaw), pukul: '', uraian: '', jumlah: '', link: '', keterangan: '' });
-      }
-  }
-  rows = newRows; setMsg("Menyimpan Data..."); callApi('syncRows', { rows }).then(loadData);
+  showUiConfirm("Buat baris tanggal otomatis untuk bulan ini?\n(Data lama pada bulan ini akan ditimpa)", () => {
+    const bulanStr = profile.bulanLaporan || 'Oktober 2026';
+    const names = ['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
+    let m = 9, y = 2026;
+    for(let i=0; i<names.length; i++) { if(bulanStr.toLowerCase().includes(names[i])) { m = i; break; } }
+    const match = bulanStr.match(/\b20\d{2}\b/); if(match) y = Number(match[0]);
+    
+    const days = new Date(y, m+1, 0).getDate(); const newRows = []; let no = 1;
+    for(let d = 1; d <= days; d++) {
+        const date = new Date(y, m, d);
+        if(date.getDay() !== 0 && date.getDay() !== 6) {
+            const tglStrRaw = `${d} ${names[m].charAt(0).toUpperCase() + names[m].slice(1)} ${y}`;
+            newRows.push({ nomor: no++, tanggal: formatTanggalLengkap(tglStrRaw), pukul: '', uraian: '', jumlah: '', link: '', keterangan: '' });
+        }
+    }
+    rows = newRows; setMsg("Menyimpan Data..."); callApi('syncRows', { rows }).then(loadData);
+  }, "Generate Tanggal Bulanan");
 }
 
 function openAdd() { 
   document.getElementById('modalTitle').textContent = 'Tambah Baris Baru'; document.getElementById('arrayIndex').value = ''; document.getElementById('insertAfter').value='';
   let maxNum = 0; rows.forEach(r => { if(r.nomor && !isNaN(r.nomor)) maxNum = Math.max(maxNum, Number(r.nomor)); });
-  document.getElementById('nomor').value = maxNum + 1; document.getElementById('tanggalRaw').readOnly = false; document.getElementById('tanggalRaw').value = '';
-  document.getElementById('tanggalStr').value=''; document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('keterangan').value=''; 
+  document.getElementById('nomor').value = maxNum + 1; 
+  document.getElementById('tanggalRaw').style.display = 'block';
+  document.getElementById('tanggalRaw').readOnly = false; 
+  document.getElementById('tanggalRaw').value = '';
+  document.getElementById('tanggalStr').value=''; document.getElementById('uraian').value=''; document.getElementById('pukulAwal').value=''; document.getElementById('pukulAkhir').value=''; document.getElementById('jumlah').value=''; document.getElementById('link').value=''; document.getElementById('keterangan').value=''; 
   document.getElementById('waktuContainer').style.display = 'flex'; document.getElementById('modalForm').classList.add('show'); 
 }
 
@@ -773,7 +859,13 @@ function saveRow() {
   callApi('syncRows', { rows }).then(loadData);
 }
 
-function hapusRow(index) { if(confirm("Hapus baris ini?")) { setMsg("Menghapus...", "white"); rows.splice(index, 1); callApi('syncRows', { rows }).then(loadData); } }
+function hapusRow(index) { 
+  showUiConfirm("Apakah Anda yakin ingin menghapus baris kegiatan ini?", () => {
+    setMsg("Menghapus...", "white"); 
+    rows.splice(index, 1); 
+    callApi('syncRows', { rows }).then(loadData);
+  }, "Hapus Baris");
+}
 
 function previewPdf() {
   setMsg("Memproses PDF Presisi Vektor...", "var(--warning)");
@@ -832,13 +924,13 @@ function previewPdf() {
 }
 
 function eksekusiUnduhPdf() {
-  if(!base64PdfUtama) return alert("Dokumen belum siap.");
-  const a = document.createElement('a'); a.href = base64PdfUtama; a.download = `LHK_${profile.username}_${profile.bulanLaporan}.pdf`; 
+  if(!base64PdfUtama) return showUiAlert("Dokumen PDF belum siap.");
+  const a = document.createElement('a'); a.href = base64PdfUtama; a.download = `LKH_${profile.username}_${profile.bulanLaporan}.pdf`; 
   document.body.appendChild(a); a.click(); a.remove(); setMsg("PDF berhasil diunduh.", "var(--success)"); closeModal('modalPdf');
 }
 
 function eksekusiSimpanKeDrive() {
-  window.open("https://drive.google.com/drive/folders/1zilbvS0QQEE0iqxlQ1__taC91MKpMhCi?usp=drive_link", "_blank");
+  window.open("https://drive.google.com/drive/folders/1zilbvS0QQEE0iqxlQ1__taC91MKpMhCi?usp=drive_link", "_blank", "noopener,noreferrer");
   closeModal('modalPdf'); setMsg("Tautan Google Drive dibuka...", "var(--warning)");
   setTimeout(() => { bukaModalKonfirmasiGdrive(); }, 1500); 
 }
