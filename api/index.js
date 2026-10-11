@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         const { data: newUser, error: insertErr } = await supabase.from('users').insert([{
           sheet_name: loginId, username: loginId, nama: loginId, password: password, role: autoRole, jabatan: '' 
         }]).select().single();
-        if (insertErr) return res.json({ error: "Username tidak ditemukan atau Password salah." });
+        if (insertErr) return res.json({ error: "ID Pengguna tidak ditemukan atau Kode Akses salah." });
         user = newUser;
       }
       return res.json({ ok: true, message: "Login berhasil", sheetName: user.sheet_name });
@@ -140,14 +140,36 @@ export default async function handler(req, res) {
     }
 
     if (action === 'syncRows') {
-      const { rows } = payload;
-      await supabase.from('lhk_data').delete().eq('sheet_name', targetSheet);
+      const { rows, isGenerateReset } = payload;
+      
+      // Hapus bersih seluruh baris lama milik targetSheet di Supabase agar tidak menumpuk/spam
+      const { error: delErr } = await supabase.from('lhk_data').delete().eq('sheet_name', targetSheet);
+      if (delErr) throw new Error("Gagal membersihkan data lama: " + delErr.message);
+
+      // Jika ini adalah Generate Bulan baru, reset juga status upload GDrive menjadi false
+      if (isGenerateReset) {
+        await supabase.from('users').update({ status_upload: false }).eq('sheet_name', targetSheet);
+      }
+
       if (rows && rows.length > 0) {
-        const insertData = rows.map((r, i) => ({
-          sheet_name: targetSheet, nomor: r.nomor || '', tanggal: r.tanggal || '', pukul: r.pukul || '',
-          uraian: r.uraian || '', jumlah: r.jumlah || '', link: r.link || '', keterangan: r.keterangan || '', sort_order: i + 1
-        }));
-        await supabase.from('lhk_data').insert(insertData);
+        // Pastikan nomor urut induk terhitung ulang dari 1 secara berurutan
+        let parentNoCounter = 1;
+        const insertData = rows.map((r, i) => {
+          const isParent = Boolean((r.nomor && String(r.nomor).trim() !== '') || (r.tanggal && String(r.tanggal).trim() !== ''));
+          return {
+            sheet_name: targetSheet,
+            nomor: isParent ? String(parentNoCounter++) : '',
+            tanggal: r.tanggal || '',
+            pukul: r.pukul || '',
+            uraian: r.uraian || '',
+            jumlah: r.jumlah || '',
+            link: r.link || '',
+            keterangan: r.keterangan || '',
+            sort_order: i + 1
+          };
+        });
+        const { error: insErr } = await supabase.from('lhk_data').insert(insertData);
+        if (insErr) throw new Error("Gagal menyimpan baris baru: " + insErr.message);
       }
       return res.json({ ok: true });
     }
