@@ -204,7 +204,7 @@
     </div>
     <div class="field"><label>Jumlah Realisasi Bukti Dukung</label><input id="jumlah" placeholder="1 Kegiatan"></div>
     <div class="field"><label>Link Bukti Dukung (Opsional)</label><input id="link"></div>
-    <div class="field full"><label>Keterangan (Opsional)</label><input id="keterangan" placeholder="-"></div>
+    <div class="field full"><label>Keterangan (Opsional)</label><input id="keterangan" placeholder=""></div>
     <div class="field full"><label>Uraian Kegiatan</label><textarea id="uraian" rows="5" placeholder="Ketik uraian kegiatan..."></textarea></div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="secondary" onclick="closeModal('modalForm')">Batal</button><button class="primary" onclick="saveRow()">💾 SIMPAN</button></div>
@@ -349,77 +349,76 @@ let cachedMyRowsForCopy = [];
 // DAFTAR HARI LIBUR NASIONAL & CUTI BERSAMA RESMI (SKB 3 MENTERI 2025 - 2027)
 const HARI_LIBUR_NASIONAL = {
   // 2025
-  "2025-01-01": "Libur Nasional: Tahun Baru 2025 Masehi",
-  "2025-01-27": "Libur Nasional: Isra Mikraj Nabi Muhammad SAW",
+  "2025-01-01": "Tahun Baru 2025 Masehi",
+  "2025-01-27": "Isra Mikraj Nabi Muhammad SAW",
   "2025-01-28": "Cuti Bersama Tahun Baru Imlek 2576 Kongzili",
-  "2025-01-29": "Libur Nasional: Tahun Baru Imlek 2576 Kongzili",
+  "2025-01-29": "Tahun Baru Imlek 2576 Kongzili",
   "2025-03-28": "Cuti Bersama Hari Suci Nyepi Tahun Baru Saka 1947",
-  "2025-03-31": "Libur Nasional: Hari Raya Idul Fitri 1446 H",
-  "2025-04-01": "Libur Nasional: Hari Raya Idul Fitri 1446 H",
+  "2025-03-31": "Hari Raya Idul Fitri 1446 H",
+  "2025-04-01": "Hari Raya Idul Fitri 1446 H",
   "2025-04-02": "Cuti Bersama Hari Raya Idul Fitri 1446 H",
   "2025-04-03": "Cuti Bersama Hari Raya Idul Fitri 1446 H",
   "2025-04-04": "Cuti Bersama Hari Raya Idul Fitri 1446 H",
   "2025-04-07": "Cuti Bersama Hari Raya Idul Fitri 1446 H",
-  "2025-04-18": "Libur Nasional: Wafat Yesus Kristus",
-  "2025-05-01": "Libur Nasional: Hari Buruh Internasional",
-  "2025-05-12": "Libur Nasional: Hari Raya Waisak 2569 BE",
+  "2025-04-18": "Wafat Yesus Kristus",
+  "2025-05-01": "Hari Buruh Internasional",
+  "2025-05-12": "Hari Raya Waisak 2569 BE",
   "2025-05-13": "Cuti Bersama Hari Raya Waisak 2569 BE",
-  "2025-05-29": "Libur Nasional: Kenaikan Yesus Kristus",
+  "2025-05-29": "Kenaikan Yesus Kristus",
   "2025-05-30": "Cuti Bersama Kenaikan Yesus Kristus",
-  "2025-06-06": "Libur Nasional: Hari Raya Idul Adha 1446 H",
+  "2025-06-06": "Hari Raya Idul Adha 1446 H",
   "2025-06-09": "Cuti Bersama Hari Raya Idul Adha 1446 H",
-  "2025-06-27": "Libur Nasional: 1 Muharam Tahun Baru Islam 1447 H",
+  "2025-06-27": "1 Muharam Tahun Baru Islam 1447 H",
   "2025-08-18": "Cuti Bersama HUT Kemerdekaan RI",
-  "2025-09-05": "Libur Nasional: Maulid Nabi Muhammad SAW",
-  "2025-12-25": "Libur Nasional: Kelahiran Yesus Kristus (Hari Natal)",
+  "2025-09-05": "Maulid Nabi Muhammad SAW",
+  "2025-12-25": "Kelahiran Yesus Kristus (Hari Natal)",
   "2025-12-26": "Cuti Bersama Kelahiran Yesus Kristus (Hari Natal)",
 
-  // 2026 (Berdasarkan SKB 3 Menteri Tahun 2026)
-  "2026-01-01": "Libur Nasional: Tahun Baru 2026 Masehi",
-  "2026-01-16": "Libur Nasional: Isra Mikraj Nabi Muhammad SAW",
+  // 2026
+  "2026-01-01": "Tahun Baru 2026 Masehi",
+  "2026-01-16": "Isra Mikraj Nabi Muhammad SAW",
   "2026-02-16": "Cuti Bersama Tahun Baru Imlek 2577 Kongzili",
-  "2026-02-17": "Libur Nasional: Tahun Baru Imlek 2577 Kongzili",
+  "2026-02-17": "Tahun Baru Imlek 2577 Kongzili",
   "2026-03-18": "Cuti Bersama Hari Suci Nyepi (Tahun Baru Saka 1948)",
-  "2026-03-19": "Libur Nasional: Hari Suci Nyepi (Tahun Baru Saka 1948)",
+  "2026-03-19": "Hari Suci Nyepi (Tahun Baru Saka 1948)",
   "2026-03-20": "Cuti Bersama Hari Raya Idul Fitri 1447 H",
   "2026-03-23": "Cuti Bersama Hari Raya Idul Fitri 1447 H",
   "2026-03-24": "Cuti Bersama Hari Raya Idul Fitri 1447 H",
-  "2026-04-03": "Libur Nasional: Wafat Yesus Kristus",
-  "2026-05-01": "Libur Nasional: Hari Buruh Internasional",
-  "2026-05-14": "Libur Nasional: Kenaikan Yesus Kristus",
+  "2026-04-03": "Wafat Yesus Kristus",
+  "2026-05-01": "Hari Buruh Internasional",
+  "2026-05-14": "Kenaikan Yesus Kristus",
   "2026-05-15": "Cuti Bersama Kenaikan Yesus Kristus",
-  "2026-05-27": "Libur Nasional: Hari Raya Idul Adha 1447 H",
+  "2026-05-27": "Hari Raya Idul Adha 1447 H",
   "2026-05-28": "Cuti Bersama Hari Raya Idul Adha 1447 H",
-  "2026-06-01": "Libur Nasional: Hari Lahir Pancasila",
-  "2026-06-16": "Libur Nasional: 1 Muharam Tahun Baru Islam 1448 H",
-  "2026-08-17": "Libur Nasional: Hari Proklamasi Kemerdekaan RI",
-  "2026-08-25": "Libur Nasional: Maulid Nabi Muhammad SAW",
+  "2026-06-01": "Hari Lahir Pancasila",
+  "2026-06-16": "1 Muharam Tahun Baru Islam 1448 H",
+  "2026-08-17": "Hari Proklamasi Kemerdekaan RI",
+  "2026-08-25": "Maulid Nabi Muhammad SAW",
   "2026-12-24": "Cuti Bersama Kelahiran Yesus Kristus (Hari Natal)",
-  "2026-12-25": "Libur Nasional: Kelahiran Yesus Kristus (Hari Natal)",
+  "2026-12-25": "Kelahiran Yesus Kristus (Hari Natal)",
 
-  // 2027 (Berdasarkan SKB 3 Menteri Tahun 2027)
-  "2027-01-01": "Libur Nasional: Tahun Baru 2027 Masehi",
-  "2027-01-05": "Libur Nasional: Isra Mikraj Nabi Muhammad SAW",
+  // 2027
+  "2027-01-01": "Tahun Baru 2027 Masehi",
+  "2027-01-05": "Isra Mikraj Nabi Muhammad SAW",
   "2027-02-05": "Cuti Bersama Tahun Baru Imlek 2578 Kongzili",
-  "2027-03-08": "Libur Nasional: Hari Suci Nyepi (Tahun Baru Saka 1949)",
+  "2027-03-08": "Hari Suci Nyepi (Tahun Baru Saka 1949)",
   "2027-03-09": "Cuti Bersama Hari Raya Idul Fitri 1448 H",
-  "2027-03-10": "Libur Nasional: Hari Raya Idul Fitri 1448 H",
-  "2027-03-11": "Libur Nasional: Hari Raya Idul Fitri 1448 H",
+  "2027-03-10": "Hari Raya Idul Fitri 1448 H",
+  "2027-03-11": "Hari Raya Idul Fitri 1448 H",
   "2027-03-12": "Cuti Bersama Hari Raya Idul Fitri 1448 H",
   "2027-03-15": "Cuti Bersama Hari Raya Idul Fitri 1448 H",
   "2027-03-25": "Cuti Bersama Wafat Yesus Kristus",
-  "2027-03-26": "Libur Nasional: Wafat Yesus Kristus",
-  "2027-05-06": "Libur Nasional: Kenaikan Yesus Kristus",
-  "2027-05-17": "Libur Nasional: Hari Raya Idul Adha 1448 H",
+  "2027-03-26": "Wafat Yesus Kristus",
+  "2027-05-06": "Kenaikan Yesus Kristus",
+  "2027-05-17": "Hari Raya Idul Adha 1448 H",
   "2027-05-18": "Cuti Bersama Hari Raya Idul Adha 1448 H",
   "2027-05-19": "Cuti Bersama Hari Raya Waisak 2571 BE",
-  "2027-05-20": "Libur Nasional: Hari Raya Waisak 2571 BE",
-  "2027-06-01": "Libur Nasional: Hari Lahir Pancasila",
-  "2027-08-17": "Libur Nasional: Hari Proklamasi Kemerdekaan RI",
+  "2027-05-20": "Hari Raya Waisak 2571 BE",
+  "2027-06-01": "Hari Lahir Pancasila",
+  "2027-08-17": "Hari Proklamasi Kemerdekaan RI",
   "2027-12-24": "Cuti Bersama Kelahiran Yesus Kristus (Hari Natal)"
 };
 
-// Fungsi Penomoran Ulang Otomatis Agar Nomor Selalu Urut 1, 2, 3...
 function recalculateNumbers() {
   let no = 1;
   for (let i = 0; i < rows.length; i++) {
@@ -880,7 +879,7 @@ function saveSettings() {
     .catch(e => showUiAlert("Gagal menyimpan pengaturan: " + e, "Error"));
 }
 
-// GENERATE BULAN: MENGHAPUS BERSIH DATA LAMA DI SUPABASE, MERESET NOMOR DARI 1, & MENGISI HARI LIBUR NASIONAL
+// GENERATE BULAN: MENGHAPUS BERSIH DATA LAMA DI SUPABASE, MERESET NOMOR DARI 1, & MENGISI NAMA HARI LIBUR NASIONAL
 function generateBulan() {
   showUiConfirm("Buat baris tanggal otomatis untuk bulan ini?\n\nSeluruh isian lama di database akan dihapus bersih agar nomor urut kembali dimulai dari 1, dan hari libur nasional (Senin-Jumat) akan otomatis dimasukkan ke Uraian Kegiatan.", () => {
     const bulanStr = profile.bulanLaporan || 'Oktober 2026';
@@ -901,17 +900,17 @@ function generateBulan() {
             const tglStrRaw = `${d} ${names[m].charAt(0).toUpperCase() + names[m].slice(1)} ${y}`;
             const yyyyMmDd = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             
-            // Cek apakah hari kerja tersebut merupakan Hari Libur Nasional / Cuti Bersama
-            const infoLibur = HARI_LIBUR_NASIONAL[yyyyMmDd] || '';
+            // Ambil nama hari libur langsung tanpa tanda "-"
+            const namaHariLibur = HARI_LIBUR_NASIONAL[yyyyMmDd] || '';
 
             newRows.push({ 
               nomor: String(no++), 
               tanggal: formatTanggalLengkap(tglStrRaw), 
               pukul: '', 
-              uraian: infoLibur, 
+              uraian: namaHariLibur, 
               jumlah: '', 
               link: '', 
-              keterangan: infoLibur ? '-' : '' 
+              keterangan: '' 
             });
         }
     }
