@@ -142,17 +142,14 @@ export default async function handler(req, res) {
     if (action === 'syncRows') {
       const { rows, isGenerateReset } = payload;
       
-      // Hapus bersih seluruh baris lama milik targetSheet di Supabase agar tidak menumpuk/spam
       const { error: delErr } = await supabase.from('lhk_data').delete().eq('sheet_name', targetSheet);
       if (delErr) throw new Error("Gagal membersihkan data lama: " + delErr.message);
 
-      // Jika ini adalah Generate Bulan baru, reset juga status upload GDrive menjadi false
       if (isGenerateReset) {
         await supabase.from('users').update({ status_upload: false }).eq('sheet_name', targetSheet);
       }
 
       if (rows && rows.length > 0) {
-        // Pastikan nomor urut induk terhitung ulang dari 1 secara berurutan
         let parentNoCounter = 1;
         const insertData = rows.map((r, i) => {
           const isParent = Boolean((r.nomor && String(r.nomor).trim() !== '') || (r.tanggal && String(r.tanggal).trim() !== ''));
